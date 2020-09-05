@@ -46,6 +46,9 @@ const D_MAX = 10;
 const E_MIN = 0;
 const E_MAX = 12;
 
+const DEFAULT_SPEED = 8;
+const DEFAULT_ROTATION_SPEED = 0.005;
+
 type HopalongParticleSet = ParticleSet<BufferGeometry, PointsMaterial>;
 
 export default class Hopalong {
@@ -69,8 +72,11 @@ export default class Hopalong {
 
   windowHalfX = window.innerWidth / 2;
   windowHalfY = window.innerHeight / 2;
-  speed = 8;
-  rotationSpeed = 0.005;
+
+  speed = DEFAULT_SPEED;
+  speedDelta = 0.5;
+  rotationSpeed = DEFAULT_ROTATION_SPEED;
+  rotationSpeedDelta = 0.001;
 
   // Orbit data
   orbit: Orbit<number> = {
@@ -411,15 +417,35 @@ export default class Hopalong {
     }
   }
 
+  changeSpeed(delta: number) {
+    const newSpeed = this.speed + delta;
+    if (newSpeed >= 0) {
+      this.speed = newSpeed;
+    } else {
+      this.speed = 0;
+    }
+  }
+
+  changeRotationSpeed(delta: number) {
+    this.rotationSpeed += delta;
+  }
+
+  resetDefaultSpeed() {
+    this.speed = DEFAULT_SPEED;
+    this.rotationSpeed = DEFAULT_ROTATION_SPEED;
+  }
+
   onKeyDown(event: KeyboardEvent) {
-    if (event.key == 'ArrowUp' && this.speed < 20) {
-      this.speed += 0.5;
-    } else if (event.key == 'ArrowDown' && this.speed > 0) {
-      this.speed -= 0.5;
-    } else if (event.key == 'ArrowLeft') {
-      this.rotationSpeed += 0.001;
-    } else if (event.key == 'ArrowRight') {
-      this.rotationSpeed -= 0.001;
+    if (event.key === 'ArrowUp' || event.key.toUpperCase() === 'W') {
+      this.changeSpeed(this.speedDelta);
+    } else if (event.key === 'ArrowDown' || event.key.toUpperCase() === 'S') {
+      this.changeSpeed(-this.speedDelta);
+    } else if (event.key === 'ArrowLeft' || event.key.toUpperCase() === 'A') {
+      this.changeRotationSpeed(this.rotationSpeedDelta);
+    } else if (event.key === 'ArrowRight' || event.key.toUpperCase() === 'D') {
+      this.changeRotationSpeed(this.rotationSpeedDelta);
+    } else if (event.key.toUpperCase() === 'R') {
+      this.resetDefaultSpeed();
     } else if (event.key.toUpperCase() === 'H' || event.key === '8') {
       this.uiManager.toggleVisuals();
     }
