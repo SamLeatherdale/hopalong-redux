@@ -69,6 +69,9 @@ export default class Hopalong {
 
   mouseX = 0;
   mouseY = 0;
+  mouseXOffset = 0;
+  mouseYOffset = 0;
+  mouseLocked = false;
 
   windowHalfX = window.innerWidth / 2;
   windowHalfY = window.innerHeight / 2;
@@ -222,7 +225,8 @@ export default class Hopalong {
       this.camera.position.x >= -CAMERA_BOUND &&
       this.camera.position.x <= CAMERA_BOUND
     ) {
-      this.camera.position.x += (this.mouseX - this.camera.position.x) * 0.05;
+      this.camera.position.x +=
+        (this.getMouseXOffset() - this.camera.position.x) * 0.05;
       if (this.camera.position.x < -CAMERA_BOUND) {
         this.camera.position.x = -CAMERA_BOUND;
       }
@@ -234,7 +238,8 @@ export default class Hopalong {
       this.camera.position.y >= -CAMERA_BOUND &&
       this.camera.position.y <= CAMERA_BOUND
     ) {
-      this.camera.position.y += (-this.mouseY - this.camera.position.y) * 0.05;
+      this.camera.position.y +=
+        (-this.getMouseYOffset() - this.camera.position.y) * 0.05;
       if (this.camera.position.y < -CAMERA_BOUND) {
         this.camera.position.y = -CAMERA_BOUND;
       }
@@ -397,24 +402,56 @@ export default class Hopalong {
   ///////////////////////////////////////////////
 
   onDocumentMouseMove(event: MouseEvent) {
+    if (this.mouseLocked) {
+      return;
+    }
     this.mouseX = event.clientX - this.windowHalfX;
     this.mouseY = event.clientY - this.windowHalfY;
   }
 
   onDocumentTouchStart(event: TouchEvent) {
+    if (this.mouseLocked) {
+      return;
+    }
     if (event.touches.length == 1) {
-      // event.preventDefault();
       this.mouseX = event.touches[0].pageX - this.windowHalfX;
       this.mouseY = event.touches[0].pageY - this.windowHalfY;
     }
   }
 
   onDocumentTouchMove(event: TouchEvent) {
+    if (this.mouseLocked) {
+      return;
+    }
     if (event.touches.length == 1) {
-      // event.preventDefault();
       this.mouseX = event.touches[0].pageX - this.windowHalfX;
       this.mouseY = event.touches[0].pageY - this.windowHalfY;
     }
+  }
+
+  setMouseLock(locked?: boolean) {
+    if (typeof locked === 'undefined') {
+      this.mouseLocked = !this.mouseLocked;
+      return;
+    }
+    this.mouseLocked = locked;
+  }
+
+  recenterCamera() {
+    this.camera.position.x = 0;
+    this.camera.position.y = 0;
+    // "Tare" to current position
+    this.mouseXOffset = this.mouseX;
+    this.mouseYOffset = this.mouseY;
+
+    this.setMouseLock();
+  }
+
+  getMouseXOffset() {
+    return this.mouseX - this.mouseXOffset;
+  }
+  getMouseYOffset() {
+    return this.mouseY - this.mouseYOffset;
   }
 
   changeSpeed(delta: number) {
@@ -436,18 +473,25 @@ export default class Hopalong {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'ArrowUp' || event.key.toUpperCase() === 'W') {
+    const { key } = event;
+    const keyUpper = key.toUpperCase();
+
+    if (key === 'ArrowUp' || keyUpper === 'W') {
       this.changeSpeed(this.speedDelta);
-    } else if (event.key === 'ArrowDown' || event.key.toUpperCase() === 'S') {
+    } else if (key === 'ArrowDown' || keyUpper === 'S') {
       this.changeSpeed(-this.speedDelta);
-    } else if (event.key === 'ArrowLeft' || event.key.toUpperCase() === 'A') {
+    } else if (key === 'ArrowLeft' || keyUpper === 'A') {
       this.changeRotationSpeed(this.rotationSpeedDelta);
-    } else if (event.key === 'ArrowRight' || event.key.toUpperCase() === 'D') {
+    } else if (key === 'ArrowRight' || keyUpper === 'D') {
       this.changeRotationSpeed(this.rotationSpeedDelta);
-    } else if (event.key.toUpperCase() === 'R') {
+    } else if (keyUpper === 'R') {
       this.resetDefaultSpeed();
-    } else if (event.key.toUpperCase() === 'H' || event.key === '8') {
+    } else if (keyUpper === 'L') {
+      this.setMouseLock();
+    } else if (keyUpper === 'H' || key === '8') {
       this.uiManager.toggleVisuals();
+    } else if (key === ' ') {
+      this.recenterCamera();
     }
   }
 
