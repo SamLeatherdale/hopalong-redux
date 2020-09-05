@@ -3,14 +3,15 @@
  * @author mr.doob / http://mrdoob.com/
  */
 
-Detector = {
+export default class Detector {
+	constructor() {
+		this.canvas = !! window.CanvasRenderingContext2D;
+		this.webgl = ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )();
+		this.workers = !! window.Worker;
+		this.fileapi = window.File && window.FileReader && window.FileList && window.Blob;
+	}
 
-	canvas : !! window.CanvasRenderingContext2D,
-	webgl : ( function () { try { return !! window.WebGLRenderingContext && !! document.createElement( 'canvas' ).getContext( 'experimental-webgl' ); } catch( e ) { return false; } } )(),
-	workers : !! window.Worker,
-	fileapi : window.File && window.FileReader && window.FileList && window.Blob,
-
-	getWebGLErrorMessage : function () {
+	getWebGLErrorMessage() {
 
 		var domElement = document.createElement( 'div' );
 
@@ -37,9 +38,9 @@ Detector = {
 
 		return domElement;
 
-	},
+	}
 
-	addGetWebGLMessage : function ( parameters ) {
+	addGetWebGLMessage( parameters ) {
 
 		var parent, id, domElement;
 
@@ -52,7 +53,6 @@ Detector = {
 		domElement.id = id;
 
 		parent.appendChild( domElement );
-
 	}
 
 };

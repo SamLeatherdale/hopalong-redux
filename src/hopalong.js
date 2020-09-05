@@ -1,8 +1,12 @@
+import THREE from 'three';
+import Detector from "./util/Detector";
 /*
 * AUTHOR: Iacopo Sassarini
 */
-
-if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+const detector = new Detector();
+if ( ! detector.webgl ) {
+    detector.addGetWebGLMessage();
+}
 
 var VISUALS_VISIBLE = true;
 
@@ -75,7 +79,7 @@ animate();
 
 function init() {
 
-sprite1 = THREE.ImageUtils.loadTexture( "galaxy.png" );
+    var sprite1 = THREE.ImageUtils.loadTexture( "galaxy.png" );
 
     container = document.createElement( 'div' );
     document.body.appendChild( container );

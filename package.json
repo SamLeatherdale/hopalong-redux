@@ -1,0 +1,11 @@
+{
+  "name": "hopalong-redux",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "stats.js": "^0.17.0",
+    "three": "0.54.0"
+  }
+}
