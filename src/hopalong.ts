@@ -16,7 +16,6 @@ import {
   WebGLRenderer,
 } from 'three';
 import { Orbit, OrbitParams, ParticleSet, SubsetPoint } from './types/hopalong';
-import UIManager from './UIManager';
 import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
@@ -64,7 +63,8 @@ export default class Hopalong {
   camera: PerspectiveCamera;
   scene: Scene;
   renderer: WebGLRenderer;
-  uiManager: UIManager;
+  stats: Stats;
+
   hueValues: number[] = [];
 
   mouseX = 0;
@@ -93,10 +93,11 @@ export default class Hopalong {
   };
   particleSets: HopalongParticleSet[] = [];
 
-  constructor(canvas: HTMLCanvasElement, texture: Texture) {
+  constructor(canvas: HTMLCanvasElement, texture: Texture, stats: Stats) {
     autoBind(this);
 
     this.texture = texture;
+    this.stats = stats;
     this.initOrbit();
     this.init(canvas);
     this.animate();
@@ -129,12 +130,7 @@ export default class Hopalong {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
-    this.camera = new PerspectiveCamera(
-      60,
-      window.innerWidth / window.innerHeight,
-      1,
-      3 * SCALE_FACTOR
-    );
+    this.camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3 * SCALE_FACTOR);
     this.camera.position.set(0, 0, SCALE_FACTOR / 2);
 
     this.scene = new Scene();
@@ -164,15 +160,12 @@ export default class Hopalong {
           transparent: false,
         });
 
-        materials.color.setHSL(
-          ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
-        );
+        materials.color.setHSL(...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS));
 
         const particles = new Points(geometry, materials);
         particles.position.x = 0;
         particles.position.y = 0;
-        particles.position.z =
-          -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
+        particles.position.z = -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
 
         const particleSet: HopalongParticleSet = {
           myMaterial: materials,
@@ -187,7 +180,6 @@ export default class Hopalong {
       }
     }
 
-    this.uiManager = new UIManager(this);
     this.addEventListeners();
     this.onWindowResize();
 
@@ -206,17 +198,14 @@ export default class Hopalong {
 
   animate() {
     requestAnimationFrame(this.animate);
+    this.stats.begin();
     this.render();
-    this.uiManager.updateStats();
+    this.stats.end();
   }
 
   render() {
-    if (
-      this.camera.position.x >= -CAMERA_BOUND &&
-      this.camera.position.x <= CAMERA_BOUND
-    ) {
-      this.camera.position.x +=
-        (this.getMouseXOffset() - this.camera.position.x) * 0.05;
+    if (this.camera.position.x >= -CAMERA_BOUND && this.camera.position.x <= CAMERA_BOUND) {
+      this.camera.position.x += (this.getMouseXOffset() - this.camera.position.x) * 0.05;
       if (this.camera.position.x < -CAMERA_BOUND) {
         this.camera.position.x = -CAMERA_BOUND;
       }
@@ -224,12 +213,8 @@ export default class Hopalong {
         this.camera.position.x = CAMERA_BOUND;
       }
     }
-    if (
-      this.camera.position.y >= -CAMERA_BOUND &&
-      this.camera.position.y <= CAMERA_BOUND
-    ) {
-      this.camera.position.y +=
-        (-this.getMouseYOffset() - this.camera.position.y) * 0.05;
+    if (this.camera.position.y >= -CAMERA_BOUND && this.camera.position.y <= CAMERA_BOUND) {
+      this.camera.position.y += (-this.getMouseYOffset() - this.camera.position.y) * 0.05;
       if (this.camera.position.y < -CAMERA_BOUND) {
         this.camera.position.y = -CAMERA_BOUND;
       }
@@ -255,9 +240,7 @@ export default class Hopalong {
         if (particleSet.needsUpdate) {
           // update the geometry and color
           particles.geometry.verticesNeedUpdate = true;
-          myMaterial.color.setHSL(
-            ...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
-          );
+          myMaterial.color.setHSL(...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS));
           particleSet.needsUpdate = false;
         }
       }
@@ -360,12 +343,8 @@ export default class Hopalong {
     for (let s = 0; s < NUM_SUBSETS; s++) {
       const curSubset = subsets[s];
       for (let i = 0; i < num_points_subset_l; i++) {
-        curSubset[i].vertex.setX(
-          scaleX * (curSubset[i].x - xMin) - scale_factor_l
-        );
-        curSubset[i].vertex.setY(
-          scaleY * (curSubset[i].y - yMin) - scale_factor_l
-        );
+        curSubset[i].vertex.setX(scaleX * (curSubset[i].x - xMin) - scale_factor_l);
+        curSubset[i].vertex.setY(scaleY * (curSubset[i].y - yMin) - scale_factor_l);
       }
     }
   }
@@ -480,7 +459,7 @@ export default class Hopalong {
     } else if (keyUpper === 'L') {
       this.setMouseLock();
     } else if (keyUpper === 'H' || key === '8') {
-      this.uiManager.toggleVisuals();
+      // TODO
     } else if (key === ' ') {
       this.recenterCamera();
     }
