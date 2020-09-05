@@ -5,9 +5,8 @@
 import autoBind from 'auto-bind';
 import {
   AdditiveBlending,
-  BufferAttribute,
-  BufferGeometry,
   FogExp2,
+  Geometry,
   PerspectiveCamera,
   Points,
   PointsMaterial,
@@ -22,8 +21,6 @@ import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
-
-const POINTS_PER_VERTEX = 3;
 
 const NUM_POINTS_SUBSET = 32000;
 const NUM_SUBSETS = 7;
@@ -51,7 +48,7 @@ const E_MAX = 12;
 const DEFAULT_SPEED = 8;
 const DEFAULT_ROTATION_SPEED = 0.005;
 
-type HopalongParticleSet = ParticleSet<BufferGeometry, PointsMaterial>;
+type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
 
 export default class Hopalong {
   // Orbit parameters
@@ -150,23 +147,12 @@ export default class Hopalong {
     }
 
     // Create particle systems
-    const POINTS_PER_VERTEX = 3;
     for (let k = 0; k < NUM_LEVELS; k++) {
       for (let s = 0; s < NUM_SUBSETS; s++) {
-        const geometry = new BufferGeometry();
-        const vertices = new Float32Array(
-          NUM_POINTS_SUBSET * POINTS_PER_VERTEX
-        );
+        const geometry = new Geometry();
         for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
-          const vertex = this.orbit.subsets[s][i].vertex.toArray();
-          for (let v = 0; v < vertex.length; v++) {
-            vertices[i * POINTS_PER_VERTEX + v] = vertex[v];
-          }
+          geometry.vertices.push(this.orbit.subsets[s][i].vertex);
         }
-        geometry.setAttribute(
-          'position',
-          new BufferAttribute(vertices, POINTS_PER_VERTEX)
-        );
 
         // Updating from ParticleSystem to points
         // https://github.com/mrdoob/three.js/issues/4065
@@ -268,8 +254,7 @@ export default class Hopalong {
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
-          particleSet.myMaterial.color.setHSL(
-            ...hsvToHsl(particleSet.mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
+          particles.geometry.verticesNeedUpdate = true;
           myMaterial.color.setHSL(
             ...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
           );
