@@ -5,10 +5,14 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
+    "auto-bind": "^4.0.0",
+    "chroma-js": "^2.1.0",
     "stats.js": "^0.17.0",
     "three": "^0.120.1"
   },
   "devDependencies": {
+    "@types/chroma-js": "^2.0.0",
+    "@types/stats.js": "^0.17.0",
     "@typescript-eslint/eslint-plugin": "^4.0.1",
     "@typescript-eslint/parser": "^4.0.1",
     "eslint": "^7.8.1",

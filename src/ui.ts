@@ -13,10 +13,10 @@ export default class UI {
 
   init() {
     this.stats = new Stats();
-    this.stats.domElement.style.position = 'absolute';
-    this.stats.domElement.style.top = '5px';
-    this.stats.domElement.style.right = '5px';
-    this.hopalong.container.appendChild(this.stats.domElement);
+    this.stats.dom.style.position = 'absolute';
+    this.stats.dom.style.top = '5px';
+    this.stats.dom.style.right = '5px';
+    this.hopalong.container.appendChild(this.stats.dom);
   }
 
   getElementById(id: string): HTMLElement {
@@ -48,7 +48,7 @@ export default class UI {
       this.getElementById('about').style.display = 'none';
       this.getElementById('info').style.display = 'none';
       this.getElementById('chaosnebula').style.display = 'none';
-      this.stats.domElement.style.display = 'none';
+      this.stats.dom.style.display = 'none';
       this.hopalong.renderer.domElement.style.cursor = 'none';
       this.visualsVisible = false;
     } else {
@@ -58,7 +58,7 @@ export default class UI {
       this.getElementById('aboutlink').style.display = 'block';
       this.getElementById('info').style.display = 'block';
       this.getElementById('chaosnebula').style.display = 'block';
-      this.stats.domElement.style.display = 'block';
+      this.stats.dom.style.display = 'block';
       this.hopalong.renderer.domElement.style.cursor = '';
       this.visualsVisible = true;
     }

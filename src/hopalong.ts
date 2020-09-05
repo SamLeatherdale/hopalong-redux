@@ -2,25 +2,29 @@
  * AUTHOR: Iacopo Sassarini
  * Updated by Sam Leatherdale
  */
-import THREE, {
-  Vector3,
-  ImageUtils,
-  PerspectiveCamera,
-  Scene,
+import autoBind from 'auto-bind';
+import {
+  AdditiveBlending,
   FogExp2,
   Geometry,
-  AdditiveBlending,
+  PerspectiveCamera,
+  Points,
+  PointsMaterial,
+  Scene,
+  TextureLoader,
+  Vector3,
   WebGLRenderer,
 } from 'three';
-import { Orbit, OrbitParams, SubsetPoint } from './types/hopalong';
+import { ColorConverter } from 'three/examples/jsm/math/ColorConverter';
+import { Orbit, OrbitParams, ParticleSet, SubsetPoint } from './types/hopalong';
 import UI from './ui';
+import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
 
 const NUM_POINTS_SUBSET = 32000;
 const NUM_SUBSETS = 7;
-const NUM_POINTS = NUM_POINTS_SUBSET * NUM_SUBSETS;
 
 const NUM_LEVELS = 7;
 const LEVEL_DEPTH = 600;
@@ -41,6 +45,8 @@ const D_MIN = 0;
 const D_MAX = 10;
 const E_MIN = 0;
 const E_MAX = 12;
+
+type MyParticleSet = ParticleSet<Geometry, PointsMaterial>;
 
 export default class Hopalong {
   // Orbit parameters
@@ -77,8 +83,10 @@ export default class Hopalong {
     scaleX: 0,
     scaleY: 0,
   };
+  particleSets: MyParticleSet[] = [];
 
   constructor() {
+    autoBind(this);
     // Initialize data points
     for (let i = 0; i < NUM_SUBSETS; i++) {
       const subsetPoints: SubsetPoint[] = [];
@@ -93,12 +101,11 @@ export default class Hopalong {
     }
 
     this.init();
-
     this.animate();
   }
 
   init() {
-    const sprite1 = ImageUtils.loadTexture('galaxy.png');
+    const galaxyTexture = new TextureLoader().load('galaxy.png');
 
     this.container = document.createElement('div');
     document.body.appendChild(this.container);
@@ -127,29 +134,34 @@ export default class Hopalong {
         for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
           geometry.vertices.push(this.orbit.subsets[s][i].vertex);
         }
-        const materials = new THREE.ParticleBasicMaterial({
+
+        // Updating from ParticleSystem to points
+        // https://github.com/mrdoob/three.js/issues/4065
+        const materials = new PointsMaterial({
           size: SPRITE_SIZE,
-          map: sprite1,
+          map: galaxyTexture,
           blending: AdditiveBlending,
           depthTest: false,
           transparent: true,
         });
-        materials.color.setHSV(
-          this.hueValues[s],
-          DEF_SATURATION,
-          DEF_BRIGHTNESS
+        materials.color.setHSL(
+          ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
         );
 
-        const particles = new THREE.ParticleSystem(geometry, materials);
-        particles.myMaterial = materials;
-        particles.myLevel = k;
-        particles.mySubset = s;
+        const particles = new Points(geometry, materials);
         particles.position.x = 0;
         particles.position.y = 0;
         particles.position.z =
           -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
-        particles.needsUpdate = 0;
+        const particleSet: MyParticleSet = {
+          myMaterial: materials,
+          myLevel: k,
+          mySubset: s,
+          needsUpdate: false,
+          particles,
+        };
         this.scene.add(particles);
+        this.particleSets.push(particleSet);
       }
     }
 
@@ -159,7 +171,10 @@ export default class Hopalong {
       // clearAlpha: 1,
       antialias: false,
     });
+    this.renderer.setClearColor(0x000000);
+    this.renderer.setClearAlpha(1);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    //this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
     this.container.appendChild(this.renderer.domElement);
 
@@ -214,19 +229,28 @@ export default class Hopalong {
 
     this.camera.lookAt(this.scene.position);
 
-    for (let i = 0; i < this.scene.objects.length; i++) {
-      this.scene.objects[i].position.z += this.speed;
-      this.scene.objects[i].rotation.z += this.rotationSpeed;
-      if (this.scene.objects[i].position.z > this.camera.position.z) {
-        this.scene.objects[i].position.z = -(NUM_LEVELS - 1) * LEVEL_DEPTH;
-        if (this.scene.objects[i].needsUpdate == 1) {
-          this.scene.objects[i].geometry.__dirtyVertices = true;
-          this.scene.objects[i].myMaterial.color.setHSV(
-            this.hueValues[this.scene.objects[i].mySubset],
+    // update particle positions
+    // for (let i = 0; i < this.scene.children.length; i++) {
+    for (const particleSet of this.particleSets) {
+      const { particles } = particleSet;
+      particles.position.z += this.speed;
+      particles.rotation.z += this.rotationSpeed;
+
+      // if the particle level has passed the fade distance
+      if (particles.position.z > this.camera.position.z) {
+        // move the particle level back in front of the camera
+        particles.position.z = -(NUM_LEVELS - 1) * LEVEL_DEPTH;
+
+        if (particleSet.needsUpdate) {
+          // update the geometry and color
+          particles.geometry.verticesNeedUpdate = true;
+          ColorConverter.setHSV(
+            particleSet.myMaterial.color,
+            particleSet.mySubset,
             DEF_SATURATION,
             DEF_BRIGHTNESS
           );
-          this.scene.objects[i].needsUpdate = 0;
+          particleSet.needsUpdate = false;
         }
       }
     }
@@ -243,14 +267,13 @@ export default class Hopalong {
     for (let s = 0; s < NUM_SUBSETS; s++) {
       this.hueValues[s] = Math.random();
     }
-    for (let i = 0; i < this.scene.objects.length; i++) {
-      this.scene.objects[i].needsUpdate = 1;
+    for (const particleSet of this.particleSets) {
+      particleSet.needsUpdate = true;
     }
   }
 
   generateOrbit() {
     let x, y, z, x1;
-    let idx = 0;
 
     this.prepareOrbit();
 
@@ -263,7 +286,6 @@ export default class Hopalong {
     const el = e;
     const subsets = this.orbit.subsets;
     const num_points_subset_l = NUM_POINTS_SUBSET;
-    const num_points_l = NUM_POINTS;
     const scale_factor_l = SCALE_FACTOR;
 
     let xMin = 0,
@@ -313,8 +335,6 @@ export default class Hopalong {
         } else if (y > yMax) {
           yMax = y;
         }
-
-        idx++;
       }
     }
 
@@ -332,10 +352,12 @@ export default class Hopalong {
     for (let s = 0; s < NUM_SUBSETS; s++) {
       const curSubset = subsets[s];
       for (let i = 0; i < num_points_subset_l; i++) {
-        curSubset[i].vertex.position.x =
-          scaleX * (curSubset[i].x - xMin) - scale_factor_l;
-        curSubset[i].vertex.position.y =
-          scaleY * (curSubset[i].y - yMin) - scale_factor_l;
+        curSubset[i].vertex.setX(
+          scaleX * (curSubset[i].x - xMin) - scale_factor_l
+        );
+        curSubset[i].vertex.setY(
+          scaleY * (curSubset[i].y - yMin) - scale_factor_l
+        );
       }
     }
   }
@@ -369,7 +391,7 @@ export default class Hopalong {
 
   onDocumentTouchStart(event: TouchEvent) {
     if (event.touches.length == 1) {
-      event.preventDefault();
+      // event.preventDefault();
       this.mouseX = event.touches[0].pageX - this.windowHalfX;
       this.mouseY = event.touches[0].pageY - this.windowHalfY;
     }
@@ -377,7 +399,7 @@ export default class Hopalong {
 
   onDocumentTouchMove(event: TouchEvent) {
     if (event.touches.length == 1) {
-      event.preventDefault();
+      // event.preventDefault();
       this.mouseX = event.touches[0].pageX - this.windowHalfX;
       this.mouseY = event.touches[0].pageY - this.windowHalfY;
     }

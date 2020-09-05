@@ -17,6 +17,12 @@ module.exports = {
     'no-else-return': ['error', { allowElseIf: false }],
     'object-curly-spacing': ['error', 'always'],
     curly: ['error', 'all'],
+    'sort-imports': [
+      'error',
+      {
+        ignoreDeclarationSort: true,
+      },
+    ],
   },
   settings: {},
 };
