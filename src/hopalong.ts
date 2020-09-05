@@ -11,13 +11,13 @@ import {
   Points,
   PointsMaterial,
   Scene,
-  TextureLoader,
+  Texture,
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { ColorConverter } from 'three/examples/jsm/math/ColorConverter';
 import { Orbit, OrbitParams, ParticleSet, SubsetPoint } from './types/hopalong';
 import UIManager from './UIManager';
+import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
@@ -45,7 +45,7 @@ const D_MAX = 10;
 const E_MIN = 0;
 const E_MAX = 12;
 
-type MyParticleSet = ParticleSet<Geometry, PointsMaterial>;
+type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
 
 export default class Hopalong {
   // Orbit parameters
@@ -81,13 +81,13 @@ export default class Hopalong {
     scaleX: 0,
     scaleY: 0,
   };
-  particleSets: MyParticleSet[] = [];
+  particleSets: HopalongParticleSet[] = [];
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, texture: Texture) {
     autoBind(this);
 
     this.initOrbit();
-    this.init(canvas);
+    this.init(canvas, texture);
     this.animate();
   }
 
@@ -106,11 +106,9 @@ export default class Hopalong {
     }
   }
 
-  init(canvas) {
+  init(canvas: HTMLCanvasElement, texture: Texture) {
     // Setup renderer and effects
     this.renderer = new WebGLRenderer({
-      // clearColor: 0x000000,
-      // clearAlpha: 1,
       canvas,
       antialias: false,
     });
@@ -118,8 +116,6 @@ export default class Hopalong {
     this.renderer.setClearAlpha(1);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
-
-    const galaxyTexture = new TextureLoader().load('galaxy.png');
 
     this.camera = new PerspectiveCamera(
       60,
@@ -150,34 +146,30 @@ export default class Hopalong {
         // https://github.com/mrdoob/three.js/issues/4065
         const materials = new PointsMaterial({
           size: SPRITE_SIZE,
-          map: galaxyTexture,
+          map: texture,
           blending: AdditiveBlending,
           depthTest: false,
-          transparent: true,
+          transparent: false,
         });
-        materials.color.setRGB(255, 0, 0);
-        // materials.color.setHSL(
-        //   ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
-        // );
-        // ColorConverter.setHSV(
-        //   materials.color,
-        //   this.hueValues[s],
-        //   DEF_SATURATION,
-        //   DEF_BRIGHTNESS
-        // );
+
+        materials.color.setHSL(
+          ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
+        );
 
         const particles = new Points(geometry, materials);
         particles.position.x = 0;
         particles.position.y = 0;
         particles.position.z =
           -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
-        const particleSet: MyParticleSet = {
+
+        const particleSet: HopalongParticleSet = {
           myMaterial: materials,
           myLevel: k,
           mySubset: s,
           needsUpdate: false,
           particles,
         };
+
         this.scene.add(particles);
         this.particleSets.push(particleSet);
       }
@@ -249,11 +241,8 @@ export default class Hopalong {
         if (particleSet.needsUpdate) {
           // update the geometry and color
           particles.geometry.verticesNeedUpdate = true;
-          ColorConverter.setHSV(
-            particleSet.myMaterial.color,
-            particleSet.mySubset,
-            DEF_SATURATION,
-            DEF_BRIGHTNESS
+          particleSet.myMaterial.color.setHSL(
+            ...hsvToHsl(particleSet.mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
           );
           particleSet.needsUpdate = false;
         }
@@ -272,7 +261,7 @@ export default class Hopalong {
     for (let s = 0; s < NUM_SUBSETS; s++) {
       this.hueValues[s] = Math.random();
     }
-    for (const particleSet of this.particleSets) {
+    for (const particleSet of this.particleSets.values()) {
       particleSet.needsUpdate = true;
     }
   }
@@ -411,15 +400,15 @@ export default class Hopalong {
   }
 
   onKeyDown(event: KeyboardEvent) {
-    if (event.keyCode == 38 && this.speed < 20) {
+    if (event.key == 'ArrowUp' && this.speed < 20) {
       this.speed += 0.5;
-    } else if (event.keyCode == 40 && this.speed > 0) {
+    } else if (event.key == 'ArrowDown' && this.speed > 0) {
       this.speed -= 0.5;
-    } else if (event.keyCode == 37) {
+    } else if (event.key == 'ArrowLeft') {
       this.rotationSpeed += 0.001;
-    } else if (event.keyCode == 39) {
+    } else if (event.key == 'ArrowRight') {
       this.rotationSpeed -= 0.001;
-    } else if (event.keyCode == 72 || event.keyCode == 104) {
+    } else if (event.key.toUpperCase() === 'H' || event.key === '8') {
       this.uiManager.toggleVisuals();
     }
   }
@@ -430,5 +419,6 @@ export default class Hopalong {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
   }
 }

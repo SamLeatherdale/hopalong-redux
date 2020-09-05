@@ -41,9 +41,6 @@ export default class UIManager {
 
   toggleVisuals() {
     if (this.visualsVisible) {
-      this.getElementById('plusone').style.display = 'none';
-      this.getElementById('tweet').style.display = 'none';
-      this.getElementById('fb').style.display = 'none';
       this.getElementById('aboutlink').style.display = 'none';
       this.getElementById('about').style.display = 'none';
       this.getElementById('info').style.display = 'none';
@@ -52,9 +49,6 @@ export default class UIManager {
       this.hopalong.renderer.domElement.style.cursor = 'none';
       this.visualsVisible = false;
     } else {
-      this.getElementById('plusone').style.display = 'block';
-      this.getElementById('tweet').style.display = 'block';
-      this.getElementById('fb').style.display = 'block';
       this.getElementById('aboutlink').style.display = 'block';
       this.getElementById('info').style.display = 'block';
       this.getElementById('chaosnebula').style.display = 'block';
