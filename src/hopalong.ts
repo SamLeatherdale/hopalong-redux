@@ -5,8 +5,9 @@
 import autoBind from 'auto-bind';
 import {
   AdditiveBlending,
+  BufferAttribute,
+  BufferGeometry,
   FogExp2,
-  Geometry,
   PerspectiveCamera,
   Points,
   PointsMaterial,
@@ -45,7 +46,7 @@ const D_MAX = 10;
 const E_MIN = 0;
 const E_MAX = 12;
 
-type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
+type HopalongParticleSet = ParticleSet<BufferGeometry, PointsMaterial>;
 
 export default class Hopalong {
   // Orbit parameters
@@ -111,6 +112,7 @@ export default class Hopalong {
     this.renderer = new WebGLRenderer({
       canvas,
       antialias: false,
+      powerPreference: 'high-performance',
     });
     this.renderer.setClearColor(0x000000);
     this.renderer.setClearAlpha(1);
@@ -135,12 +137,23 @@ export default class Hopalong {
     }
 
     // Create particle systems
+    const POINTS_PER_VERTEX = 3;
     for (let k = 0; k < NUM_LEVELS; k++) {
       for (let s = 0; s < NUM_SUBSETS; s++) {
-        const geometry = new Geometry();
+        const geometry = new BufferGeometry();
+        const vertices = new Float32Array(
+          NUM_POINTS_SUBSET * POINTS_PER_VERTEX
+        );
         for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
-          geometry.vertices.push(this.orbit.subsets[s][i].vertex);
+          const vertex = this.orbit.subsets[s][i].vertex.toArray();
+          for (let v = 0; v < vertex.length; v++) {
+            vertices[i * POINTS_PER_VERTEX + v] = vertex[v];
+          }
         }
+        geometry.setAttribute(
+          'position',
+          new BufferAttribute(vertices, POINTS_PER_VERTEX)
+        );
 
         // Updating from ParticleSystem to points
         // https://github.com/mrdoob/three.js/issues/4065
@@ -240,7 +253,6 @@ export default class Hopalong {
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
-          particles.geometry.verticesNeedUpdate = true;
           particleSet.myMaterial.color.setHSL(
             ...hsvToHsl(particleSet.mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
           );
