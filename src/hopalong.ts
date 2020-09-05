@@ -23,6 +23,8 @@ import { hsvToHsl } from './util/color';
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
 
+const POINTS_PER_VERTEX = 3;
+
 const NUM_POINTS_SUBSET = 32000;
 const NUM_SUBSETS = 7;
 
@@ -61,6 +63,7 @@ export default class Hopalong {
     e: 0,
   };
 
+  texture: Texture;
   camera: PerspectiveCamera;
   scene: Scene;
   renderer: WebGLRenderer;
@@ -96,8 +99,9 @@ export default class Hopalong {
   constructor(canvas: HTMLCanvasElement, texture: Texture) {
     autoBind(this);
 
+    this.texture = texture;
     this.initOrbit();
-    this.init(canvas, texture);
+    this.init(canvas);
     this.animate();
   }
 
@@ -116,7 +120,7 @@ export default class Hopalong {
     }
   }
 
-  init(canvas: HTMLCanvasElement, texture: Texture) {
+  init(canvas: HTMLCanvasElement) {
     // Setup renderer and effects
     this.renderer = new WebGLRenderer({
       canvas,
@@ -168,7 +172,7 @@ export default class Hopalong {
         // https://github.com/mrdoob/three.js/issues/4065
         const materials = new PointsMaterial({
           size: SPRITE_SIZE,
-          map: texture,
+          map: this.texture,
           blending: AdditiveBlending,
           depthTest: false,
           transparent: false,
@@ -253,7 +257,7 @@ export default class Hopalong {
     // update particle positions
     // for (let i = 0; i < this.scene.children.length; i++) {
     for (const particleSet of this.particleSets) {
-      const { particles } = particleSet;
+      const { particles, myMaterial, mySubset } = particleSet;
       particles.position.z += this.speed;
       particles.rotation.z += this.rotationSpeed;
 
@@ -266,6 +270,8 @@ export default class Hopalong {
           // update the geometry and color
           particleSet.myMaterial.color.setHSL(
             ...hsvToHsl(particleSet.mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
+          myMaterial.color.setHSL(
+            ...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
           );
           particleSet.needsUpdate = false;
         }
