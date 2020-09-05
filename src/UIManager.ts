@@ -1,7 +1,7 @@
 import Stats from 'stats.js';
 import Hopalong from './hopalong';
 
-export default class UI {
+export default class UIManager {
   hopalong: Hopalong;
   stats: Stats;
   visualsVisible = true;
@@ -16,7 +16,7 @@ export default class UI {
     this.stats.dom.style.position = 'absolute';
     this.stats.dom.style.top = '5px';
     this.stats.dom.style.right = '5px';
-    this.hopalong.container.appendChild(this.stats.dom);
+    this.getElementById('stats').appendChild(this.stats.dom);
   }
 
   getElementById(id: string): HTMLElement {

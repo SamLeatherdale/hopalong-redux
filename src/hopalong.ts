@@ -17,8 +17,7 @@ import {
 } from 'three';
 import { ColorConverter } from 'three/examples/jsm/math/ColorConverter';
 import { Orbit, OrbitParams, ParticleSet, SubsetPoint } from './types/hopalong';
-import UI from './ui';
-import { hsvToHsl } from './util/color';
+import UIManager from './UIManager';
 
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
@@ -58,11 +57,10 @@ export default class Hopalong {
     e: 0,
   };
 
-  container: HTMLElement;
   camera: PerspectiveCamera;
   scene: Scene;
   renderer: WebGLRenderer;
-  UI: UI;
+  uiManager: UIManager;
   hueValues: number[] = [];
 
   mouseX = 0;
@@ -85,8 +83,15 @@ export default class Hopalong {
   };
   particleSets: MyParticleSet[] = [];
 
-  constructor() {
+  constructor(canvas: HTMLCanvasElement) {
     autoBind(this);
+
+    this.initOrbit();
+    this.init(canvas);
+    this.animate();
+  }
+
+  initOrbit() {
     // Initialize data points
     for (let i = 0; i < NUM_SUBSETS; i++) {
       const subsetPoints: SubsetPoint[] = [];
@@ -99,16 +104,22 @@ export default class Hopalong {
       }
       this.orbit.subsets.push(subsetPoints);
     }
-
-    this.init();
-    this.animate();
   }
 
-  init() {
-    const galaxyTexture = new TextureLoader().load('galaxy.png');
+  init(canvas) {
+    // Setup renderer and effects
+    this.renderer = new WebGLRenderer({
+      // clearColor: 0x000000,
+      // clearAlpha: 1,
+      canvas,
+      antialias: false,
+    });
+    this.renderer.setClearColor(0x000000);
+    this.renderer.setClearAlpha(1);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
-    this.container = document.createElement('div');
-    document.body.appendChild(this.container);
+    const galaxyTexture = new TextureLoader().load('galaxy.png');
 
     this.camera = new PerspectiveCamera(
       60,
@@ -116,7 +127,7 @@ export default class Hopalong {
       1,
       3 * SCALE_FACTOR
     );
-    this.camera.position.z = SCALE_FACTOR / 2;
+    this.camera.position.set(0, 0, SCALE_FACTOR / 2);
 
     this.scene = new Scene();
     this.scene.fog = new FogExp2(0x000000, 0.001);
@@ -144,9 +155,16 @@ export default class Hopalong {
           depthTest: false,
           transparent: true,
         });
-        materials.color.setHSL(
-          ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
-        );
+        materials.color.setRGB(255, 0, 0);
+        // materials.color.setHSL(
+        //   ...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS)
+        // );
+        // ColorConverter.setHSV(
+        //   materials.color,
+        //   this.hueValues[s],
+        //   DEF_SATURATION,
+        //   DEF_BRIGHTNESS
+        // );
 
         const particles = new Points(geometry, materials);
         particles.position.x = 0;
@@ -165,22 +183,9 @@ export default class Hopalong {
       }
     }
 
-    // Setup renderer and effects
-    this.renderer = new WebGLRenderer({
-      // clearColor: 0x000000,
-      // clearAlpha: 1,
-      antialias: false,
-    });
-    this.renderer.setClearColor(0x000000);
-    this.renderer.setClearAlpha(1);
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    //this.renderer.setPixelRatio(window.devicePixelRatio || 1);
-
-    this.container.appendChild(this.renderer.domElement);
-
-    // init ui
-    this.UI = new UI(this);
+    this.uiManager = new UIManager(this);
     this.addEventListeners();
+    this.onWindowResize();
 
     // Schedule orbit regeneration
     setInterval(this.updateOrbit, 3000);
@@ -198,7 +203,7 @@ export default class Hopalong {
   animate() {
     requestAnimationFrame(this.animate);
     this.render();
-    this.UI.updateStats();
+    this.uiManager.updateStats();
   }
 
   render() {
@@ -415,7 +420,7 @@ export default class Hopalong {
     } else if (event.keyCode == 39) {
       this.rotationSpeed -= 0.001;
     } else if (event.keyCode == 72 || event.keyCode == 104) {
-      this.UI.toggleVisuals();
+      this.uiManager.toggleVisuals();
     }
   }
 

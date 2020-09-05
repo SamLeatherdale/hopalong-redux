@@ -1,9 +1,17 @@
 import Hopalong from './hopalong';
 import Detector from './util/Detector';
 
-const detector = new Detector();
-if (!detector.webgl) {
-  detector.addGetWebGLMessage();
-}
+function main() {
+  const detector = new Detector();
+  if (!detector.webgl) {
+    detector.addGetWebGLMessage();
+  }
 
-(window as any).hopalong = new Hopalong();
+  const canvas = document.getElementById('render-canvas');
+  if (typeof canvas !== 'object' || !(canvas instanceof HTMLCanvasElement)) {
+    throw new Error('Unable to find canvas.');
+  }
+
+  (window as any).hopalong = new Hopalong(canvas);
+}
+document.addEventListener('DOMContentLoaded', main);
