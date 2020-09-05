@@ -95,6 +95,7 @@ export default class Hopalong {
     scaleY: 0,
   };
   particleSets: HopalongParticleSet[] = [];
+  geometryVertices: Float32Array[];
 
   constructor(canvas: HTMLCanvasElement, texture: Texture) {
     autoBind(this);
@@ -143,31 +144,52 @@ export default class Hopalong {
     this.scene = new Scene();
     this.scene.fog = new FogExp2(0x000000, 0.001);
 
+    this.createGeometryVertices();
     this.generateOrbit();
 
     for (let s = 0; s < NUM_SUBSETS; s++) {
       this.hueValues[s] = Math.random();
     }
 
-    // Create particle systems
-    const POINTS_PER_VERTEX = 3;
-    for (let k = 0; k < NUM_LEVELS; k++) {
-      for (let s = 0; s < NUM_SUBSETS; s++) {
-        const geometry = new BufferGeometry();
-        const vertices = new Float32Array(
-          NUM_POINTS_SUBSET * POINTS_PER_VERTEX
-        );
-        for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
-          const vertex = this.orbit.subsets[s][i].vertex.toArray();
-          for (let v = 0; v < vertex.length; v++) {
-            vertices[i * POINTS_PER_VERTEX + v] = vertex[v];
-          }
-        }
-        geometry.setAttribute(
-          'position',
-          new BufferAttribute(vertices, POINTS_PER_VERTEX)
-        );
+    this.createParticles();
 
+    this.uiManager = new UIManager(this);
+    this.addEventListeners();
+    this.onWindowResize();
+
+    // Schedule orbit regeneration
+    setInterval(this.updateOrbit, 3000);
+  }
+
+  createGeometryVertices() {
+    this.geometryVertices = new Array(NUM_SUBSETS);
+    for (let s = 0; s < NUM_SUBSETS; s++) {
+      // Vertices is an array of integers
+      // Each block of 3 integers is one vertex
+      this.geometryVertices[s] = new Float32Array(
+        NUM_POINTS_SUBSET * POINTS_PER_VERTEX
+      );
+    }
+  }
+
+  createParticles() {
+    // Create particle systems
+    for (let s = 0; s < NUM_SUBSETS; s++) {
+      const geometry = new BufferGeometry();
+      const vertices = this.geometryVertices[s];
+
+      for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
+        const vertex = this.orbit.subsets[s][i].vertex.toArray();
+        for (let v = 0; v < vertex.length; v++) {
+          vertices[i * POINTS_PER_VERTEX + v] = vertex[v];
+        }
+      }
+      geometry.setAttribute(
+        'position',
+        new BufferAttribute(vertices, POINTS_PER_VERTEX)
+      );
+
+      for (let k = 0; k < NUM_LEVELS; k++) {
         // Updating from ParticleSystem to points
         // https://github.com/mrdoob/three.js/issues/4065
         const materials = new PointsMaterial({
@@ -200,13 +222,6 @@ export default class Hopalong {
         this.particleSets.push(particleSet);
       }
     }
-
-    this.uiManager = new UIManager(this);
-    this.addEventListeners();
-    this.onWindowResize();
-
-    // Schedule orbit regeneration
-    setInterval(this.updateOrbit, 3000);
   }
 
   addEventListeners() {
@@ -268,8 +283,9 @@ export default class Hopalong {
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
-          particleSet.myMaterial.color.setHSL(
-            ...hsvToHsl(particleSet.mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
+          // https://stackoverflow.com/questions/36699389/verticesneedupdate-in-three-js
+          particles.geometry.attributes.position.needsUpdate = true;
+
           myMaterial.color.setHSL(
             ...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS)
           );
@@ -374,13 +390,14 @@ export default class Hopalong {
     // Normalize and update vertex data
     for (let s = 0; s < NUM_SUBSETS; s++) {
       const curSubset = subsets[s];
+      const vertices = this.geometryVertices[s];
       for (let i = 0; i < num_points_subset_l; i++) {
-        curSubset[i].vertex.setX(
-          scaleX * (curSubset[i].x - xMin) - scale_factor_l
-        );
-        curSubset[i].vertex.setY(
-          scaleY * (curSubset[i].y - yMin) - scale_factor_l
-        );
+        const newX = scaleX * (curSubset[i].x - xMin) - scale_factor_l;
+        const newY = scaleY * (curSubset[i].y - yMin) - scale_factor_l;
+        curSubset[i].vertex.setX(newX);
+        curSubset[i].vertex.setY(newY);
+        vertices[i * POINTS_PER_VERTEX] = newX;
+        vertices[i * POINTS_PER_VERTEX + 1] = newY;
       }
     }
   }
