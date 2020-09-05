@@ -1,9 +1,9 @@
+import { TextureLoader } from 'three';
 import Hopalong from './hopalong';
 import Detector from './util/Detector';
 import textureUrl from './images/galaxy.png';
-import loadTexturePromise from './util/textureLoader';
 
-async function main() {
+function main() {
   const detector = new Detector();
   if (!detector.webgl) {
     detector.addGetWebGLMessage();
@@ -14,11 +14,7 @@ async function main() {
     throw new Error('Unable to find canvas.');
   }
 
-  try {
-    const texture = await loadTexturePromise(textureUrl, console.log);
-    (window as any).hopalong = new Hopalong(canvas, texture);
-  } catch (e) {
-    console.error(e);
-  }
+  const texture = new TextureLoader().load(textureUrl);
+  (window as any).hopalong = new Hopalong(canvas, texture);
 }
 document.addEventListener('DOMContentLoaded', main);
