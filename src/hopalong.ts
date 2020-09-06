@@ -152,10 +152,7 @@ export default class Hopalong {
     this.scene.fog = new FogExp2(0x000000, 0.001);
 
     this.generateOrbit();
-
-    for (let s = 0; s < NUM_SUBSETS; s++) {
-      this.hueValues[s] = Math.random();
-    }
+    this.generateHues();
 
     // Create particle systems
     for (let k = 0; k < NUM_LEVELS; k++) {
@@ -256,7 +253,9 @@ export default class Hopalong {
         if (particleSet.needsUpdate) {
           // update the geometry and color
           particles.geometry.verticesNeedUpdate = true;
-          myMaterial.color.setHSL(...hsvToHsl(mySubset, DEF_SATURATION, DEF_BRIGHTNESS));
+          myMaterial.color.setHSL(
+            ...hsvToHsl(this.hueValues[mySubset], DEF_SATURATION, DEF_BRIGHTNESS)
+          );
           particleSet.needsUpdate = false;
         }
       }
@@ -271,11 +270,15 @@ export default class Hopalong {
 
   updateOrbit() {
     this.generateOrbit();
-    for (let s = 0; s < NUM_SUBSETS; s++) {
-      this.hueValues[s] = Math.random();
-    }
+    this.generateHues();
     for (const particleSet of this.particleSets.values()) {
       particleSet.needsUpdate = true;
+    }
+  }
+
+  generateHues() {
+    for (let s = 0; s < NUM_SUBSETS; s++) {
+      this.hueValues[s] = Math.random();
     }
   }
 
