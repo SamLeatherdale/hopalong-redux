@@ -1,6 +1,6 @@
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 
-export const unstyledButton = css`
+export const UnstyledButton = styled.button`
   border: none;
   margin: 0;
   padding: 0;

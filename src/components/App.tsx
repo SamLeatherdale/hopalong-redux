@@ -36,6 +36,7 @@ export default function App({ stats }: PropsType) {
   const toolbar = (
     <Toolbar
       menuOpen={menuOpen}
+      statsOpen={statsOpen}
       updateMenuOpen={() => updateMenuOpen(invertCurrent)}
       updateStatsOpen={() => updateStatsOpen(invertCurrent)}
     />

@@ -1,41 +1,49 @@
 import React from 'react';
-import { FaBars, FaChartArea, FaExpandArrowsAlt, FaTimes } from 'react-icons/fa';
+import { FaBars, FaChartArea, FaCompressArrowsAlt, FaExpandArrowsAlt, FaTimes } from 'react-icons/fa';
 import styled from 'styled-components';
-import { unstyledButton } from '../styles/mixins';
+import { UnstyledButton } from '../styles/mixins';
+import { classes } from '../styles/utils';
+import { useForceUpdate } from '../util/hooks';
 
 type PropsType = {
   menuOpen: boolean;
+  statsOpen: boolean;
   updateMenuOpen: () => unknown;
   updateStatsOpen: () => unknown;
 };
-export default function Toolbar({ menuOpen, updateMenuOpen, updateStatsOpen }: PropsType) {
+export default function Toolbar({ menuOpen, statsOpen, updateMenuOpen, updateStatsOpen }: PropsType) {
+  const isFullscreen = !!document.fullscreenElement;
+
+  const forceUpdate = useForceUpdate();
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(forceUpdate);
+    } else {
+      document.exitFullscreen().then(forceUpdate);
+    }
+  };
+
   return (
     <nav>
       <NavList>
         <NavListItem>
-          <NavListButton onClick={updateMenuOpen}>{menuOpen ? <FaTimes /> : <FaBars />}</NavListButton>
-        </NavListItem>
-        <NavListItem>
-          <NavListButton onClick={toggleFullScreen}>
-            <FaExpandArrowsAlt />
+          <NavListButton className={classes({ active: menuOpen })} onClick={updateMenuOpen}>
+            {menuOpen ? <FaTimes /> : <FaBars />}
           </NavListButton>
         </NavListItem>
         <NavListItem>
-          <NavListButton onClick={updateStatsOpen}>
+          <NavListButton className={classes({ active: isFullscreen })} onClick={toggleFullScreen}>
+            {isFullscreen ? <FaCompressArrowsAlt /> : <FaExpandArrowsAlt />}
+          </NavListButton>
+        </NavListItem>
+        <NavListItem>
+          <NavListButton className={classes({ active: statsOpen })} onClick={updateStatsOpen}>
             <FaChartArea />
           </NavListButton>
         </NavListItem>
       </NavList>
     </nav>
   );
-}
-
-function toggleFullScreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
 }
 
 const NavList = styled.ul`
@@ -50,8 +58,7 @@ const NavListItem = styled.li`
     margin-left: 8px;
   }
 `;
-const NavListButton = styled.button`
-  ${unstyledButton};
+const NavListButton = styled(UnstyledButton)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,4 +69,10 @@ const NavListButton = styled.button`
   padding: 4px;
   color: white;
   font-size: 24px;
+
+  &:hover,
+  &.active {
+    background-color: white;
+    color: black;
+  }
 `;

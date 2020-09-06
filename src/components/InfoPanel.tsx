@@ -8,9 +8,10 @@ export default function InfoPanel() {
       <InfoBox>
         <Heading2>Controls</Heading2>
         <UnstyledUl>
-          <li>[Mouse Move] Change camera position</li>
-          <li>[Up-Down] Change speed - [Left-Right] Change rotation</li>
-          <li>[H] Toggle info and cursor - [F11] Toggle fullscreen</li>
+          <li>[Mouse Move] Change camera position - [L] Lock camera position</li>
+          <li>[Space] Center and lock camera position</li>
+          <li>[Up/Down or W/S] Change speed - [Left/Right or A/D] Change rotation</li>
+          <li>[H] Toggle cursor - [F11] Toggle fullscreen</li>
         </UnstyledUl>
       </InfoBox>
 

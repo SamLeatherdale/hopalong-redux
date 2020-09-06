@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import styled, { css } from 'styled-components';
-import { unstyledButton } from '../styles/mixins';
+import styled from 'styled-components';
+import { UnstyledButton } from '../styles/mixins';
+import { classes } from '../styles/utils';
 import InfoPanel from './InfoPanel';
 
 enum Tabs {
@@ -14,7 +15,7 @@ export default function Menu() {
     <Root>
       <TabBar>
         {tabs.map((tab) => (
-          <Tab key={tab} active={currentTab === tab} onClick={() => updateCurrentTab(tab)}>
+          <Tab key={tab} className={classes({ active: currentTab === tab })} onClick={() => updateCurrentTab(tab)}>
             {tab}
           </Tab>
         ))}
@@ -32,19 +33,17 @@ const TabBar = styled.header`
   display: flex;
   justify-content: center;
 `;
-const Tab = styled.button<{ active: boolean }>`
-  ${unstyledButton};
+const Tab = styled(UnstyledButton)`
   padding: 8px 16px;
   font-size: 16px;
   border: 1px solid white;
   color: white;
 
-  ${({ active }) =>
-    active &&
-    css`
-      background-color: white;
-      color: black;
-    `};
+  &:hover,
+  &.active {
+    background-color: white;
+    color: black;
+  }
 `;
 const Content = styled.main`
   margin-top: 40px;
