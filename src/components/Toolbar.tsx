@@ -10,7 +10,7 @@ import {
   FaTimes,
 } from 'react-icons/fa';
 import styled from 'styled-components';
-import { UnstyledButton } from '../styles/mixins';
+import { IconButton } from './common/Button';
 import { classes } from '../styles/utils';
 import { useForceUpdate } from '../util/hooks';
 
@@ -47,32 +47,32 @@ export default function Toolbar({
     <nav>
       <NavList>
         <ListItem>
-          <Button className={classes({ active: menuOpen })} onClick={updateMenuOpen}>
+          <IconButton className={classes({ active: menuOpen })} onClick={updateMenuOpen}>
             {menuOpen ? <FaTimes /> : <FaBars />}
-          </Button>
+          </IconButton>
         </ListItem>
         <ListItem>
-          <Button className={classes({ active: isFullscreen })} onClick={toggleFullScreen}>
+          <IconButton className={classes({ active: isFullscreen })} onClick={toggleFullScreen}>
             {isFullscreen ? <FaCompressArrowsAlt /> : <FaExpandArrowsAlt />}
-          </Button>
+          </IconButton>
         </ListItem>
         <ListItem>
-          <Button className={classes({ active: mouseLocked })} onClick={updateMouseLocked}>
+          <IconButton className={classes({ active: mouseLocked })} onClick={updateMouseLocked}>
             {mouseLocked ? <FaLock /> : <FaLockOpen />}
-          </Button>
+          </IconButton>
         </ListItem>
         <ListItem>
-          <Button onClick={onCenter}>
+          <IconButton onClick={onCenter}>
             <FaCrosshairs />
-          </Button>
+          </IconButton>
         </ListItem>
         <ListItem>
-          <Button
+          <IconButton
             className={classes({ active: statsOpen, hide: !menuOpen })}
             onClick={updateStatsOpen}
           >
             <FaChartArea />
-          </Button>
+          </IconButton>
         </ListItem>
       </NavList>
     </nav>
@@ -85,35 +85,8 @@ const NavList = styled.ul`
   margin: 0;
   padding: 8px;
 `;
-const navListItemSize = 32;
 const ListItem = styled.li`
   &:not(:first-child) {
     margin-left: 8px;
-  }
-`;
-const Button = styled(UnstyledButton)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: ${navListItemSize}px;
-  height: ${navListItemSize}px;
-  border: 1px solid white;
-  border-radius: 4px;
-  padding: 4px;
-  font-size: 24px;
-  &,
-  &:focus {
-    background-color: transparent;
-    color: white;
-  }
-
-  &:hover:not(:focus),
-  &.active {
-    background-color: white;
-    color: black;
-  }
-
-  &.hide {
-    display: none;
   }
 `;

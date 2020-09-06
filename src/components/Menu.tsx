@@ -2,20 +2,18 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { UnstyledButton } from '../styles/mixins';
 import { classes } from '../styles/utils';
-import { MenuSettings, OnSettingsChange } from '../types/hopalong';
 import InfoPanel from './InfoPanel';
-import SettingsPanel from './SettingsPanel';
+import SettingsPanel, { SettingsPanelProps } from './SettingsPanel';
 
 enum Tabs {
   SETTINGS = 'Settings',
   ABOUT = 'About',
 }
 type PropsType = {
-  settings: MenuSettings;
-  onSettingsChange: OnSettingsChange<MenuSettings>;
+  settingsProps: SettingsPanelProps;
 };
 
-export default function Mhenu({ settings, onSettingsChange }: PropsType) {
+export default function Menu({ settingsProps }: PropsType) {
   const tabs = [Tabs.SETTINGS, Tabs.ABOUT];
   const [currentTab, updateCurrentTab] = useState(Tabs.SETTINGS);
 
@@ -25,7 +23,7 @@ export default function Mhenu({ settings, onSettingsChange }: PropsType) {
       content = <InfoPanel />;
       break;
     case Tabs.SETTINGS:
-      content = <SettingsPanel settings={settings} onChange={onSettingsChange} />;
+      content = <SettingsPanel {...settingsProps} />;
       break;
   }
   return (
@@ -49,6 +47,7 @@ const Root = styled.div`
   padding: 0 16px 32px;
   font-size: 13px;
   font-weight: bold;
+  color: white;
 `;
 const TabBar = styled.header`
   display: flex;
@@ -71,5 +70,4 @@ const Content = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: scroll;
 `;

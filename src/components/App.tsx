@@ -12,9 +12,10 @@ type PropsType = {
   settings: Settings;
   onCenter: () => unknown;
   onSettingsChange: OnSettingsChange<Settings>;
+  onReset: () => unknown;
 };
 
-export default function App({ stats, settings, onSettingsChange, onCenter }: PropsType) {
+export default function App({ stats, settings, onSettingsChange, onCenter, onReset }: PropsType) {
   const [toolbarVisible, updateToolbarVisible] = useState(true);
   const [menuOpen, updateMenuOpen] = useState(true);
   const [statsOpen, updateStatsOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function App({ stats, settings, onSettingsChange, onCenter }: Pro
       {menuOpen && (
         <MenuBg open={menuOpen}>
           {toolbar}
-          <Menu settings={menuSettings} onSettingsChange={onSettingsChange} />
+          <Menu settingsProps={{ settings: menuSettings, onChange: onSettingsChange, onReset }} />
         </MenuBg>
       )}
       <StatsBg open={statsOpen}>
@@ -91,7 +92,7 @@ const MenuBg = styled.div<{ open: boolean }>`
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
-  overflow-y: scroll;
+  overflow-y: auto;
 `;
 const StatsBg = styled.div<{ open: boolean }>`
   position: absolute;

@@ -15,16 +15,20 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { Orbit, OrbitParams, ParticleSet, Settings, SubsetPoint } from './types/hopalong';
+import {
+  AdvancedSettings,
+  Orbit,
+  OrbitParams,
+  ParticleSet,
+  Settings,
+  SimpleSettings,
+  SubsetPoint,
+} from './types/hopalong';
 import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
 const CAMERA_BOUND = 200;
 
-const NUM_POINTS_SUBSET = 32000;
-const NUM_SUBSETS = 7;
-
-const NUM_LEVELS = 7;
 const LEVEL_DEPTH = 600;
 
 const DEF_BRIGHTNESS = 1;
@@ -46,10 +50,16 @@ const E_MAX = 12;
 
 const DEFAULT_SPEED = 8;
 const DEFAULT_ROTATION_SPEED = 0.005;
+const DEFAULT_FOV = 60;
+
+const DEFAULT_POINTS_SUBSET = 32000;
+const DEFAULT_SUBSETS = 7;
+const DEFAULT_LEVELS = 7;
 
 type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
 
 type ConstructorProps = {
+  advancedSettings: Partial<AdvancedSettings>;
   canvas: HTMLCanvasElement;
   texture: Texture;
   stats: Stats;
@@ -71,14 +81,12 @@ export default class Hopalong {
   scene: Scene;
   renderer: WebGLRenderer;
   stats: Stats;
-  onSettingsUpdate: (settings: Settings) => unknown;
+  onSettingsUpdate: (settings: SimpleSettings) => unknown;
 
   hueValues: number[] = [];
 
   mouseX = 0;
   mouseY = 0;
-  mouseXOffset = 0;
-  mouseYOffset = 0;
   mouseLocked = false;
 
   windowHalfX = window.innerWidth / 2;
@@ -88,6 +96,10 @@ export default class Hopalong {
   speedDelta = 0.5;
   rotationSpeed = DEFAULT_ROTATION_SPEED;
   rotationSpeedDelta = 0.001;
+
+  numPointsSubset = DEFAULT_POINTS_SUBSET;
+  numSubsets = DEFAULT_SUBSETS;
+  numLevels = DEFAULT_LEVELS;
 
   // Orbit data
   orbit: Orbit<number> = {
@@ -100,10 +112,16 @@ export default class Hopalong {
     scaleY: 0,
   };
   particleSets: HopalongParticleSet[] = [];
+  updateIntervalKey: number;
+  destroyed = false;
 
-  constructor({ canvas, texture, stats, onSettingsUpdate }: ConstructorProps) {
+  constructor({ advancedSettings, canvas, texture, stats, onSettingsUpdate }: ConstructorProps) {
     autoBind(this);
 
+    const { subsetCount, levelCount, pointsPerSubset } = advancedSettings;
+    this.numSubsets = subsetCount || DEFAULT_SUBSETS;
+    this.numLevels = levelCount || DEFAULT_LEVELS;
+    this.numPointsSubset = pointsPerSubset || DEFAULT_POINTS_SUBSET;
     this.texture = texture;
     this.stats = stats;
     this.initOrbit();
@@ -113,11 +131,17 @@ export default class Hopalong {
     this.fireSettingsChange();
   }
 
+  destroy() {
+    window.clearInterval(this.updateIntervalKey);
+    this.renderer.dispose();
+    this.destroyed = true;
+  }
+
   initOrbit() {
     // Initialize data points
-    for (let i = 0; i < NUM_SUBSETS; i++) {
+    for (let i = 0; i < this.numSubsets; i++) {
       const subsetPoints: SubsetPoint[] = [];
-      for (let j = 0; j < NUM_POINTS_SUBSET; j++) {
+      for (let j = 0; j < this.numPointsSubset; j++) {
         subsetPoints[j] = {
           x: 0,
           y: 0,
@@ -141,7 +165,7 @@ export default class Hopalong {
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
     this.camera = new PerspectiveCamera(
-      60,
+      DEFAULT_FOV,
       window.innerWidth / window.innerHeight,
       1,
       3 * SCALE_FACTOR
@@ -155,10 +179,10 @@ export default class Hopalong {
     this.generateHues();
 
     // Create particle systems
-    for (let k = 0; k < NUM_LEVELS; k++) {
-      for (let s = 0; s < NUM_SUBSETS; s++) {
+    for (let k = 0; k < this.numLevels; k++) {
+      for (let s = 0; s < this.numSubsets; s++) {
         const geometry = new Geometry();
-        for (let i = 0; i < NUM_POINTS_SUBSET; i++) {
+        for (let i = 0; i < this.numPointsSubset; i++) {
           geometry.vertices.push(this.orbit.subsets[s][i].vertex);
         }
 
@@ -178,7 +202,7 @@ export default class Hopalong {
         particles.position.x = 0;
         particles.position.y = 0;
         particles.position.z =
-          -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
+          -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / this.numSubsets + SCALE_FACTOR / 2;
 
         const particleSet: HopalongParticleSet = {
           myMaterial: materials,
@@ -197,7 +221,7 @@ export default class Hopalong {
     this.onWindowResize();
 
     // Schedule orbit regeneration
-    setInterval(this.updateOrbit, 3000);
+    this.updateIntervalKey = window.setInterval(this.updateOrbit, 3000);
   }
 
   addEventListeners() {
@@ -210,6 +234,11 @@ export default class Hopalong {
   }
 
   animate() {
+    if (this.destroyed) {
+      // This function will continue to run as long as it requests animation frames,
+      // so we must stop it
+      return;
+    }
     requestAnimationFrame(this.animate);
     this.stats.begin();
     this.render();
@@ -218,7 +247,7 @@ export default class Hopalong {
 
   render() {
     if (this.camera.position.x >= -CAMERA_BOUND && this.camera.position.x <= CAMERA_BOUND) {
-      this.camera.position.x += (this.getMouseXOffset() - this.camera.position.x) * 0.05;
+      this.camera.position.x += (this.getMouseX() - this.camera.position.x) * 0.05;
       if (this.camera.position.x < -CAMERA_BOUND) {
         this.camera.position.x = -CAMERA_BOUND;
       }
@@ -227,7 +256,7 @@ export default class Hopalong {
       }
     }
     if (this.camera.position.y >= -CAMERA_BOUND && this.camera.position.y <= CAMERA_BOUND) {
-      this.camera.position.y += (-this.getMouseYOffset() - this.camera.position.y) * 0.05;
+      this.camera.position.y += (-this.getMouseY() - this.camera.position.y) * 0.05;
       if (this.camera.position.y < -CAMERA_BOUND) {
         this.camera.position.y = -CAMERA_BOUND;
       }
@@ -248,7 +277,7 @@ export default class Hopalong {
       // if the particle level has passed the fade distance
       if (particles.position.z > this.camera.position.z) {
         // move the particle level back in front of the camera
-        particles.position.z = -(NUM_LEVELS - 1) * LEVEL_DEPTH;
+        particles.position.z = -(this.numLevels - 1) * LEVEL_DEPTH;
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
@@ -277,7 +306,7 @@ export default class Hopalong {
   }
 
   generateHues() {
-    for (let s = 0; s < NUM_SUBSETS; s++) {
+    for (let s = 0; s < this.numSubsets; s++) {
       this.hueValues[s] = Math.random();
     }
   }
@@ -295,7 +324,7 @@ export default class Hopalong {
     const dl = d;
     const el = e;
     const subsets = this.orbit.subsets;
-    const num_points_subset_l = NUM_POINTS_SUBSET;
+    const num_points_subset_l = this.numPointsSubset;
     const scale_factor_l = SCALE_FACTOR;
 
     let xMin = 0,
@@ -304,7 +333,7 @@ export default class Hopalong {
       yMax = 0;
     const choice = Math.random();
 
-    for (let s = 0; s < NUM_SUBSETS; s++) {
+    for (let s = 0; s < this.numSubsets; s++) {
       // Use a different starting point for each orbit subset
       x = s * 0.005 * (0.5 - Math.random());
       y = s * 0.005 * (0.5 - Math.random());
@@ -359,7 +388,7 @@ export default class Hopalong {
     this.orbit.scaleY = scaleY;
 
     // Normalize and update vertex data
-    for (let s = 0; s < NUM_SUBSETS; s++) {
+    for (let s = 0; s < this.numSubsets; s++) {
       const curSubset = subsets[s];
       for (let i = 0; i < num_points_subset_l; i++) {
         curSubset[i].vertex.setX(scaleX * (curSubset[i].x - xMin) - scale_factor_l);
@@ -430,21 +459,20 @@ export default class Hopalong {
   recenterCamera() {
     this.camera.position.x = 0;
     this.camera.position.y = 0;
-    // "Tare" to current position
-    this.mouseXOffset = this.mouseX;
-    this.mouseYOffset = this.mouseY;
+    this.mouseX = 0;
+    this.mouseY = 0;
 
     this.setMouseLock();
   }
 
-  getMouseXOffset() {
-    return this.mouseX - this.mouseXOffset;
+  getMouseX() {
+    return this.mouseX;
   }
-  getMouseYOffset() {
-    return this.mouseY - this.mouseYOffset;
+  getMouseY() {
+    return this.mouseY;
   }
 
-  applySettings({ speed, rotationSpeed, mouseLocked }: Partial<Settings>) {
+  applySettings({ speed, rotationSpeed, mouseLocked, cameraFov }: Partial<SimpleSettings>) {
     if (typeof speed !== 'undefined') {
       this.speed = speed;
     }
@@ -454,17 +482,24 @@ export default class Hopalong {
     if (typeof mouseLocked !== 'undefined') {
       this.mouseLocked = mouseLocked;
     }
+    if (typeof cameraFov !== 'undefined') {
+      this.setCameraFOV(cameraFov);
+    }
     this.fireSettingsChange();
   }
 
   fireSettingsChange() {
+    this.onSettingsUpdate(this.getSettings());
+  }
+
+  getSettings(): SimpleSettings {
     const { speed, rotationSpeed, mouseLocked } = this;
-    const settings: Settings = {
+    return {
       speed,
       rotationSpeed,
       mouseLocked,
+      cameraFov: this.camera.fov,
     };
-    this.onSettingsUpdate(settings);
   }
 
   changeSpeed(delta: number) {
@@ -482,9 +517,10 @@ export default class Hopalong {
     this.fireSettingsChange();
   }
 
-  resetDefaultSpeed() {
+  resetDefaults() {
     this.speed = DEFAULT_SPEED;
     this.rotationSpeed = DEFAULT_ROTATION_SPEED;
+    this.camera.fov = DEFAULT_FOV;
     this.fireSettingsChange();
   }
 
@@ -501,7 +537,7 @@ export default class Hopalong {
     } else if (key === 'ArrowRight' || keyUpper === 'D') {
       this.changeRotationSpeed(this.rotationSpeedDelta);
     } else if (keyUpper === 'R') {
-      this.resetDefaultSpeed();
+      this.resetDefaults();
     } else if (keyUpper === 'L') {
       this.setMouseLock();
     } else if (keyUpper === 'H') {
@@ -518,5 +554,11 @@ export default class Hopalong {
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+  }
+
+  setCameraFOV(fov: number) {
+    this.camera.fov = fov;
+    this.camera.updateProjectionMatrix();
+    this.fireSettingsChange();
   }
 }

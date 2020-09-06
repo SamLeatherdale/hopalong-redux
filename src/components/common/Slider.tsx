@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import styled from 'styled-components';
-import { useId } from '../util/hooks';
+import { useId } from '../../util/hooks';
 import Input from './Input';
 
 type PropsType = {

@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { UnstyledUl } from '../styles/mixins';
+import { Box } from './common/Box';
 
 export default function InfoPanel() {
   return (
@@ -83,12 +84,7 @@ const Heading2 = styled.h2`
   margin: 0 0 8px;
   font-size: 24px;
 `;
-const InfoBox = styled.section`
-  color: #fff;
-  background: rgba(18, 18, 18, 0.8);
-  border-radius: 20px;
-  padding: 16px;
-
+const InfoBox = styled(Box)`
   p,
   li {
     line-height: 1.5;
