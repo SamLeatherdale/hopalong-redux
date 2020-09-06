@@ -7,6 +7,9 @@ body {
     overflow: hidden;
     font-family: 'Roboto Mono', monospace;
 }
+input {
+  font-family: 'Roboto Mono', monospace;
+}
 a {
     color:#ffffaa;
 }

@@ -2,25 +2,46 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { UnstyledButton } from '../styles/mixins';
 import { classes } from '../styles/utils';
+import { Settings } from '../types/hopalong';
 import InfoPanel from './InfoPanel';
+import SettingsPanel from './SettingsPanel';
 
 enum Tabs {
   SETTINGS = 'Settings',
   ABOUT = 'About',
 }
-export default function Menu() {
+type PropsType = {
+  settings: Settings;
+  onSettingsChange: (settings: Settings) => unknown;
+};
+
+export default function Menu({ settings, onSettingsChange }: PropsType) {
   const tabs = [Tabs.SETTINGS, Tabs.ABOUT];
-  const [currentTab, updateCurrentTab] = useState(Tabs.ABOUT);
+  const [currentTab, updateCurrentTab] = useState(Tabs.SETTINGS);
+
+  let content;
+  switch (currentTab) {
+    case Tabs.ABOUT:
+      content = <InfoPanel />;
+      break;
+    case Tabs.SETTINGS:
+      content = <SettingsPanel settings={settings} onChange={onSettingsChange} />;
+      break;
+  }
   return (
     <Root>
       <TabBar>
         {tabs.map((tab) => (
-          <Tab key={tab} className={classes({ active: currentTab === tab })} onClick={() => updateCurrentTab(tab)}>
+          <Tab
+            key={tab}
+            className={classes({ active: currentTab === tab })}
+            onClick={() => updateCurrentTab(tab)}
+          >
             {tab}
           </Tab>
         ))}
       </TabBar>
-      <Content>{currentTab === Tabs.ABOUT && <InfoPanel />}</Content>
+      <Content>{content}</Content>
     </Root>
   );
 }
@@ -46,5 +67,8 @@ const Tab = styled(UnstyledButton)`
   }
 `;
 const Content = styled.main`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   margin-top: 40px;
 `;

@@ -15,7 +15,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { Orbit, OrbitParams, ParticleSet, SubsetPoint } from './types/hopalong';
+import { Orbit, OrbitParams, ParticleSet, Settings, SubsetPoint } from './types/hopalong';
 import { hsvToHsl } from './util/color';
 
 const SCALE_FACTOR = 1500;
@@ -49,6 +49,13 @@ const DEFAULT_ROTATION_SPEED = 0.005;
 
 type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
 
+type ConstructorProps = {
+  canvas: HTMLCanvasElement;
+  texture: Texture;
+  stats: Stats;
+  onSettingsUpdate: (settings: Settings) => unknown;
+};
+
 export default class Hopalong {
   // Orbit parameters
   orbitParams: OrbitParams<number> = {
@@ -64,6 +71,7 @@ export default class Hopalong {
   scene: Scene;
   renderer: WebGLRenderer;
   stats: Stats;
+  onSettingsUpdate: (settings: Settings) => unknown;
 
   hueValues: number[] = [];
 
@@ -93,7 +101,7 @@ export default class Hopalong {
   };
   particleSets: HopalongParticleSet[] = [];
 
-  constructor(canvas: HTMLCanvasElement, texture: Texture, stats: Stats) {
+  constructor({ canvas, texture, stats, onSettingsUpdate }: ConstructorProps) {
     autoBind(this);
 
     this.texture = texture;
@@ -101,6 +109,8 @@ export default class Hopalong {
     this.initOrbit();
     this.init(canvas);
     this.animate();
+    this.onSettingsUpdate = onSettingsUpdate;
+    this.fireSettingsChange();
   }
 
   initOrbit() {
@@ -130,7 +140,12 @@ export default class Hopalong {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio || 1);
 
-    this.camera = new PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 3 * SCALE_FACTOR);
+    this.camera = new PerspectiveCamera(
+      60,
+      window.innerWidth / window.innerHeight,
+      1,
+      3 * SCALE_FACTOR
+    );
     this.camera.position.set(0, 0, SCALE_FACTOR / 2);
 
     this.scene = new Scene();
@@ -165,7 +180,8 @@ export default class Hopalong {
         const particles = new Points(geometry, materials);
         particles.position.x = 0;
         particles.position.y = 0;
-        particles.position.z = -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
+        particles.position.z =
+          -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / NUM_SUBSETS + SCALE_FACTOR / 2;
 
         const particleSet: HopalongParticleSet = {
           myMaterial: materials,
@@ -424,6 +440,21 @@ export default class Hopalong {
     return this.mouseY - this.mouseYOffset;
   }
 
+  applySettings({ speed, rotationSpeed }: Settings) {
+    this.speed = speed;
+    this.rotationSpeed = rotationSpeed;
+    this.fireSettingsChange();
+  }
+
+  fireSettingsChange() {
+    const { speed, rotationSpeed } = this;
+    const settings: Settings = {
+      speed,
+      rotationSpeed,
+    };
+    this.onSettingsUpdate(settings);
+  }
+
   changeSpeed(delta: number) {
     const newSpeed = this.speed + delta;
     if (newSpeed >= 0) {
@@ -431,15 +462,18 @@ export default class Hopalong {
     } else {
       this.speed = 0;
     }
+    this.fireSettingsChange();
   }
 
   changeRotationSpeed(delta: number) {
     this.rotationSpeed += delta;
+    this.fireSettingsChange();
   }
 
   resetDefaultSpeed() {
     this.speed = DEFAULT_SPEED;
     this.rotationSpeed = DEFAULT_ROTATION_SPEED;
+    this.fireSettingsChange();
   }
 
   onKeyDown(event: KeyboardEvent) {

@@ -31,3 +31,8 @@ export type ParticleSet<
   needsUpdate: boolean;
   particles: Points<TGeometry, TMaterial>;
 };
+export type SimpleSettings = {
+  speed: number;
+  rotationSpeed: number;
+};
+export type Settings = SimpleSettings;

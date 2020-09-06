@@ -7,8 +7,10 @@ import { TextureLoader } from 'three';
 import App from './components/App';
 import Hopalong from './hopalong';
 import textureUrl from './images/galaxy.png';
+import { Settings } from './types/hopalong';
 import Detector from './util/Detector';
 
+let hopalong: Hopalong;
 function main() {
   const detector = new Detector();
   if (!detector.webgl) {
@@ -22,12 +24,22 @@ function main() {
 
   const texture = new TextureLoader().load(textureUrl);
   const stats = new Stats();
-  (window as any).hopalong = new Hopalong(canvas, texture, stats);
-
+  hopalong = new Hopalong({
+    canvas,
+    texture,
+    stats,
+    onSettingsUpdate: (settings) => renderReact(stats, settings),
+  });
+  (window as any).hopalong = hopalong;
+}
+function renderReact(stats: Stats, settings: Settings) {
   const reactRoot = document.getElementById('react-root');
   if (!reactRoot) {
     throw new Error('Unable to find React root.');
   }
-  render(<App stats={stats} />, reactRoot);
+  render(<App stats={stats} settings={settings} onSettingsChange={applySettings} />, reactRoot);
+}
+function applySettings(settings: Settings) {
+  hopalong.applySettings(settings);
 }
 document.addEventListener('DOMContentLoaded', main);

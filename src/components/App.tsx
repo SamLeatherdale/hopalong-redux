@@ -2,17 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { throttle } from 'lodash';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
+import { Settings } from '../types/hopalong';
 import Menu from './Menu';
 import Toolbar from './Toolbar';
 import WebGLStats from './WebGLStats';
 
 type PropsType = {
   stats: Stats;
+  settings: Settings;
+  onSettingsChange: (settings: Settings) => unknown;
 };
 
-export default function App({ stats }: PropsType) {
+export default function App({ stats, settings, onSettingsChange }: PropsType) {
   const [toolbarVisible, updateToolbarVisible] = useState(true);
-  const [menuOpen, updateMenuOpen] = useState(false);
+  const [menuOpen, updateMenuOpen] = useState(true);
   const [statsOpen, updateStatsOpen] = useState(false);
   const invertCurrent = (value) => !value;
   let hideTimeout: number;
@@ -51,10 +54,12 @@ export default function App({ stats }: PropsType) {
       >
         {!menuOpen && <ToolbarWrap>{toolbar}</ToolbarWrap>}
       </motion.div>
-      <MenuBg open={menuOpen}>
-        {toolbar}
-        <Menu />
-      </MenuBg>
+      {menuOpen && (
+        <MenuBg open={menuOpen}>
+          {toolbar}
+          <Menu settings={settings} onSettingsChange={onSettingsChange} />
+        </MenuBg>
+      )}
       <StatsBg open={statsOpen}>
         <WebGLStats stats={stats} />
       </StatsBg>
