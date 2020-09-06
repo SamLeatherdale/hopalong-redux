@@ -9,6 +9,7 @@
     "chroma-js": "^2.1.0",
     "framer-motion": "^2.6.6",
     "lodash": "^4.17.20",
+    "parcel-plugin-pwa-manifest": "^3.0.10",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-icons": "^3.11.0",
@@ -43,5 +44,16 @@
     "build": "parcel build index.html",
     "develop": "parcel index.html",
     "typecheck": "tsc --noEmit"
+  },
+  "pwaManifest": {
+    "name": "Hopalong Redux",
+    "shortName": "Hopalong",
+    "theme": "#000000",
+    "generateIconOptions": {
+      "baseIcon": "./src/images/galaxy.png",
+      "sizes": [192],
+      "genFavicons": true
+    },
+    "display": "fullscreen"
   }
 }
