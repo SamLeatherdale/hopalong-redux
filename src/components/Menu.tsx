@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { UnstyledButton } from '../styles/mixins';
 import { classes } from '../styles/utils';
-import { Settings } from '../types/hopalong';
+import { MenuSettings, OnSettingsChange } from '../types/hopalong';
 import InfoPanel from './InfoPanel';
 import SettingsPanel from './SettingsPanel';
 
@@ -11,11 +11,11 @@ enum Tabs {
   ABOUT = 'About',
 }
 type PropsType = {
-  settings: Settings;
-  onSettingsChange: (settings: Settings) => unknown;
+  settings: MenuSettings;
+  onSettingsChange: OnSettingsChange<MenuSettings>;
 };
 
-export default function Menu({ settings, onSettingsChange }: PropsType) {
+export default function Mhenu({ settings, onSettingsChange }: PropsType) {
   const tabs = [Tabs.SETTINGS, Tabs.ABOUT];
   const [currentTab, updateCurrentTab] = useState(Tabs.SETTINGS);
 
@@ -46,13 +46,14 @@ export default function Menu({ settings, onSettingsChange }: PropsType) {
   );
 }
 const Root = styled.div`
-  padding: 0 16px;
+  padding: 0 16px 32px;
   font-size: 13px;
   font-weight: bold;
 `;
 const TabBar = styled.header`
   display: flex;
   justify-content: center;
+  margin: 20px 0 32px;
 `;
 const Tab = styled(UnstyledButton)`
   padding: 8px 16px;
@@ -70,5 +71,5 @@ const Content = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 40px;
+  overflow-y: scroll;
 `;

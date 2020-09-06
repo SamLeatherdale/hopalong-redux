@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { throttle } from 'lodash';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
-import { Settings } from '../types/hopalong';
+import { OnSettingsChange, Settings } from '../types/hopalong';
 import Menu from './Menu';
 import Toolbar from './Toolbar';
 import WebGLStats from './WebGLStats';
@@ -10,10 +10,11 @@ import WebGLStats from './WebGLStats';
 type PropsType = {
   stats: Stats;
   settings: Settings;
-  onSettingsChange: (settings: Settings) => unknown;
+  onCenter: () => unknown;
+  onSettingsChange: OnSettingsChange<Settings>;
 };
 
-export default function App({ stats, settings, onSettingsChange }: PropsType) {
+export default function App({ stats, settings, onSettingsChange, onCenter }: PropsType) {
   const [toolbarVisible, updateToolbarVisible] = useState(true);
   const [menuOpen, updateMenuOpen] = useState(true);
   const [statsOpen, updateStatsOpen] = useState(false);
@@ -36,12 +37,17 @@ export default function App({ stats, settings, onSettingsChange }: PropsType) {
     setToolbarTimeout();
   });
 
+  const { mouseLocked, ...menuSettings } = settings;
+
   const toolbar = (
     <Toolbar
       menuOpen={menuOpen}
       statsOpen={statsOpen}
+      mouseLocked={mouseLocked}
       updateMenuOpen={() => updateMenuOpen(invertCurrent)}
       updateStatsOpen={() => updateStatsOpen(invertCurrent)}
+      updateMouseLocked={() => onSettingsChange({ mouseLocked: !mouseLocked })}
+      onCenter={onCenter}
     />
   );
 
@@ -57,7 +63,7 @@ export default function App({ stats, settings, onSettingsChange }: PropsType) {
       {menuOpen && (
         <MenuBg open={menuOpen}>
           {toolbar}
-          <Menu settings={settings} onSettingsChange={onSettingsChange} />
+          <Menu settings={menuSettings} onSettingsChange={onSettingsChange} />
         </MenuBg>
       )}
       <StatsBg open={statsOpen}>
@@ -85,12 +91,13 @@ const MenuBg = styled.div<{ open: boolean }>`
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  overflow-y: scroll;
 `;
 const StatsBg = styled.div<{ open: boolean }>`
   position: absolute;
   display: ${({ open }) => (open ? 'block' : 'none')};
   z-index: ${zIndexStats};
-  top: 0;
-  right: 0;
+  top: 4px;
+  right: 4px;
   background-color: rgba(0, 0, 0, 0.5);
 `;

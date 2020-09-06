@@ -1,5 +1,14 @@
 import React from 'react';
-import { FaBars, FaChartArea, FaCompressArrowsAlt, FaExpandArrowsAlt, FaTimes } from 'react-icons/fa';
+import {
+  FaBars,
+  FaChartArea,
+  FaCompressArrowsAlt,
+  FaCrosshairs,
+  FaExpandArrowsAlt,
+  FaLock,
+  FaLockOpen,
+  FaTimes,
+} from 'react-icons/fa';
 import styled from 'styled-components';
 import { UnstyledButton } from '../styles/mixins';
 import { classes } from '../styles/utils';
@@ -8,10 +17,21 @@ import { useForceUpdate } from '../util/hooks';
 type PropsType = {
   menuOpen: boolean;
   statsOpen: boolean;
+  mouseLocked: boolean;
+  onCenter: () => unknown;
   updateMenuOpen: () => unknown;
   updateStatsOpen: () => unknown;
+  updateMouseLocked: () => unknown;
 };
-export default function Toolbar({ menuOpen, statsOpen, updateMenuOpen, updateStatsOpen }: PropsType) {
+export default function Toolbar({
+  menuOpen,
+  statsOpen,
+  mouseLocked,
+  onCenter,
+  updateMenuOpen,
+  updateStatsOpen,
+  updateMouseLocked,
+}: PropsType) {
   const isFullscreen = !!document.fullscreenElement;
 
   const forceUpdate = useForceUpdate();
@@ -26,21 +46,34 @@ export default function Toolbar({ menuOpen, statsOpen, updateMenuOpen, updateSta
   return (
     <nav>
       <NavList>
-        <NavListItem>
-          <NavListButton className={classes({ active: menuOpen })} onClick={updateMenuOpen}>
+        <ListItem>
+          <Button className={classes({ active: menuOpen })} onClick={updateMenuOpen}>
             {menuOpen ? <FaTimes /> : <FaBars />}
-          </NavListButton>
-        </NavListItem>
-        <NavListItem>
-          <NavListButton className={classes({ active: isFullscreen })} onClick={toggleFullScreen}>
+          </Button>
+        </ListItem>
+        <ListItem>
+          <Button className={classes({ active: isFullscreen })} onClick={toggleFullScreen}>
             {isFullscreen ? <FaCompressArrowsAlt /> : <FaExpandArrowsAlt />}
-          </NavListButton>
-        </NavListItem>
-        <NavListItem>
-          <NavListButton className={classes({ active: statsOpen })} onClick={updateStatsOpen}>
+          </Button>
+        </ListItem>
+        <ListItem>
+          <Button className={classes({ active: mouseLocked })} onClick={updateMouseLocked}>
+            {mouseLocked ? <FaLock /> : <FaLockOpen />}
+          </Button>
+        </ListItem>
+        <ListItem>
+          <Button onClick={onCenter}>
+            <FaCrosshairs />
+          </Button>
+        </ListItem>
+        <ListItem>
+          <Button
+            className={classes({ active: statsOpen, hide: !menuOpen })}
+            onClick={updateStatsOpen}
+          >
             <FaChartArea />
-          </NavListButton>
-        </NavListItem>
+          </Button>
+        </ListItem>
       </NavList>
     </nav>
   );
@@ -53,12 +86,12 @@ const NavList = styled.ul`
   padding: 8px;
 `;
 const navListItemSize = 32;
-const NavListItem = styled.li`
+const ListItem = styled.li`
   &:not(:first-child) {
     margin-left: 8px;
   }
 `;
-const NavListButton = styled(UnstyledButton)`
+const Button = styled(UnstyledButton)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,12 +100,20 @@ const NavListButton = styled(UnstyledButton)`
   border: 1px solid white;
   border-radius: 4px;
   padding: 4px;
-  color: white;
   font-size: 24px;
+  &,
+  &:focus {
+    background-color: transparent;
+    color: white;
+  }
 
-  &:hover,
+  &:hover:not(:focus),
   &.active {
     background-color: white;
     color: black;
+  }
+
+  &.hide {
+    display: none;
   }
 `;

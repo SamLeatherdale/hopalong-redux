@@ -31,8 +31,12 @@ export type ParticleSet<
   needsUpdate: boolean;
   particles: Points<TGeometry, TMaterial>;
 };
-export type SimpleSettings = {
+export type MenuSettings = {
   speed: number;
   rotationSpeed: number;
 };
-export type Settings = SimpleSettings;
+export type ToolbarSettings = {
+  mouseLocked: boolean;
+};
+export type Settings = MenuSettings & ToolbarSettings;
+export type OnSettingsChange<T> = (settings: Partial<T>) => unknown;

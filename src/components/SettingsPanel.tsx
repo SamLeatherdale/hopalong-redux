@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { UnstyledUl } from '../styles/mixins';
-import { Settings } from '../types/hopalong';
+import { MenuSettings } from '../types/hopalong';
 import Checkbox from './Checkbox';
 import Slider from './Slider';
 
 type PropsType = {
-  settings: Settings;
-  onChange: (settings: Settings) => unknown;
+  settings: MenuSettings;
+  onChange: (settings: MenuSettings) => unknown;
 };
 export default function SettingsPanel({ settings, onChange }: PropsType) {
   const { speed, rotationSpeed } = settings;

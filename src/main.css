@@ -7,6 +7,9 @@ body {
     overflow: hidden;
     font-family: 'Roboto Mono', monospace;
 }
+body.hideCursor {
+  cursor: none;
+}
 input {
   font-family: 'Roboto Mono', monospace;
 }

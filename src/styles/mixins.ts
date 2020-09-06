@@ -28,6 +28,9 @@ export const UnstyledButton = styled.button`
     border: 0;
     padding: 0;
   }
+  &:focus {
+    outline: none;
+  }
 `;
 export const UnstyledUl = styled.ul`
   list-style: none;

@@ -418,9 +418,10 @@ export default class Hopalong {
   setMouseLock(locked?: boolean) {
     if (typeof locked === 'undefined') {
       this.mouseLocked = !this.mouseLocked;
-      return;
+    } else {
+      this.mouseLocked = locked;
     }
-    this.mouseLocked = locked;
+    this.fireSettingsChange();
   }
 
   recenterCamera() {
@@ -440,17 +441,25 @@ export default class Hopalong {
     return this.mouseY - this.mouseYOffset;
   }
 
-  applySettings({ speed, rotationSpeed }: Settings) {
-    this.speed = speed;
-    this.rotationSpeed = rotationSpeed;
+  applySettings({ speed, rotationSpeed, mouseLocked }: Partial<Settings>) {
+    if (typeof speed !== 'undefined') {
+      this.speed = speed;
+    }
+    if (typeof rotationSpeed !== 'undefined') {
+      this.rotationSpeed = rotationSpeed;
+    }
+    if (typeof mouseLocked !== 'undefined') {
+      this.mouseLocked = mouseLocked;
+    }
     this.fireSettingsChange();
   }
 
   fireSettingsChange() {
-    const { speed, rotationSpeed } = this;
+    const { speed, rotationSpeed, mouseLocked } = this;
     const settings: Settings = {
       speed,
       rotationSpeed,
+      mouseLocked,
     };
     this.onSettingsUpdate(settings);
   }
@@ -492,9 +501,9 @@ export default class Hopalong {
       this.resetDefaultSpeed();
     } else if (keyUpper === 'L') {
       this.setMouseLock();
-    } else if (keyUpper === 'H' || key === '8') {
-      // TODO
-    } else if (key === ' ') {
+    } else if (keyUpper === 'H') {
+      document.body.classList.toggle('hideCursor');
+    } else if (keyUpper === 'C') {
       this.recenterCamera();
     }
   }

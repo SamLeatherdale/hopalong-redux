@@ -37,9 +37,17 @@ function renderReact(stats: Stats, settings: Settings) {
   if (!reactRoot) {
     throw new Error('Unable to find React root.');
   }
-  render(<App stats={stats} settings={settings} onSettingsChange={applySettings} />, reactRoot);
+  render(
+    <App
+      stats={stats}
+      settings={settings}
+      onSettingsChange={applySettings}
+      onCenter={() => hopalong.recenterCamera()}
+    />,
+    reactRoot
+  );
 }
-function applySettings(settings: Settings) {
+function applySettings(settings: Partial<Settings>) {
   hopalong.applySettings(settings);
 }
 document.addEventListener('DOMContentLoaded', main);
