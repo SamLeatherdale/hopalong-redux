@@ -17,7 +17,7 @@ type PropsType = {
 
 export default function App({ stats, settings, onSettingsChange, onCenter, onReset }: PropsType) {
   const [toolbarVisible, updateToolbarVisible] = useState(true);
-  const [menuOpen, updateMenuOpen] = useState(true);
+  const [menuOpen, updateMenuOpen] = useState(false);
   const [statsOpen, updateStatsOpen] = useState(false);
   const invertCurrent = (value) => !value;
   let hideTimeout: number;
@@ -29,7 +29,7 @@ export default function App({ stats, settings, onSettingsChange, onCenter, onRes
   }, 250);
   const hideToolbar = () => updateToolbarVisible(false);
   const setToolbarTimeout = () => {
-    hideTimeout = window.setTimeout(hideToolbar, 3000);
+    hideTimeout = window.setTimeout(hideToolbar, 2000);
   };
 
   useEffect(() => {
