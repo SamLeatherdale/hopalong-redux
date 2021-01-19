@@ -7,6 +7,8 @@ import {
   FaExpandArrowsAlt,
   FaLock,
   FaLockOpen,
+  FaPause,
+  FaPlay,
   FaTimes,
 } from 'react-icons/fa';
 import styled from 'styled-components';
@@ -18,19 +20,23 @@ type PropsType = {
   menuOpen: boolean;
   statsOpen: boolean;
   mouseLocked: boolean;
+  isPlaying: boolean;
   onCenter: () => unknown;
   updateMenuOpen: () => unknown;
   updateStatsOpen: () => unknown;
   updateMouseLocked: () => unknown;
+  updateIsPlaying: () => unknown;
 };
 export default function Toolbar({
   menuOpen,
   statsOpen,
   mouseLocked,
+  isPlaying,
   onCenter,
   updateMenuOpen,
   updateStatsOpen,
   updateMouseLocked,
+  updateIsPlaying,
 }: PropsType) {
   const isFullscreen = !!document.fullscreenElement;
 
@@ -59,6 +65,11 @@ export default function Toolbar({
         <ListItem>
           <IconButton className={classes({ active: mouseLocked })} onClick={updateMouseLocked}>
             {mouseLocked ? <FaLock /> : <FaLockOpen />}
+          </IconButton>
+        </ListItem>
+        <ListItem>
+          <IconButton className={classes({ active: mouseLocked })} onClick={updateIsPlaying}>
+            {isPlaying ? <FaPause /> : <FaPlay />}
           </IconButton>
         </ListItem>
         <ListItem>
