@@ -52,9 +52,9 @@ const DEFAULT_SPEED = 8;
 const DEFAULT_ROTATION_SPEED = 0.005;
 const DEFAULT_FOV = 60;
 
-const DEFAULT_POINTS_SUBSET = 32000;
-const DEFAULT_SUBSETS = 7;
-const DEFAULT_LEVELS = 7;
+export const DEFAULT_POINTS_SUBSET = 4000;
+export const DEFAULT_SUBSETS = 7;
+export const DEFAULT_LEVELS = 7;
 
 type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
 

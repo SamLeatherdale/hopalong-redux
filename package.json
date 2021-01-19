@@ -13,6 +13,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-icons": "^3.11.0",
+    "react-player": "^2.7.2",
     "reset-css": "^5.0.1",
     "reset.css": "^2.0.2",
     "stats.js": "^0.17.0",
@@ -43,6 +44,7 @@
   "scripts": {
     "build": "parcel build index.html",
     "develop": "parcel index.html",
+    "start": "yarn develop",
     "typecheck": "tsc --noEmit"
   },
   "pwaManifest": {
@@ -51,7 +53,9 @@
     "theme": "#000000",
     "generateIconOptions": {
       "baseIcon": "./src/images/galaxy.png",
-      "sizes": [192],
+      "sizes": [
+        192
+      ],
       "genFavicons": true
     },
     "display": "fullscreen"

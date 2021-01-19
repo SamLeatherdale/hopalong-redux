@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ReactPlayer from 'react-player/youtube';
 import { throttle } from 'lodash';
 import { motion } from 'framer-motion';
 import styled from 'styled-components';
@@ -38,22 +39,28 @@ export default function App({ stats, settings, onSettingsChange, onCenter, onRes
     setToolbarTimeout();
   });
 
-  const { mouseLocked, ...menuSettings } = settings;
+  const { mouseLocked, isPlaying, ...menuSettings } = settings;
 
   const toolbar = (
     <Toolbar
       menuOpen={menuOpen}
       statsOpen={statsOpen}
       mouseLocked={mouseLocked}
+      isPlaying={isPlaying}
       updateMenuOpen={() => updateMenuOpen(invertCurrent)}
       updateStatsOpen={() => updateStatsOpen(invertCurrent)}
       updateMouseLocked={() => onSettingsChange({ mouseLocked: !mouseLocked })}
+      updateIsPlaying={() => onSettingsChange({ isPlaying: !isPlaying })}
       onCenter={onCenter}
     />
   );
+  console.log(isPlaying);
 
   return (
     <>
+      <PlayerWrap>
+        <ReactPlayer url="https://www.youtube.com/watch?v=tKi9Z-f6qX4" playing={isPlaying} />
+      </PlayerWrap>
       <motion.div
         animate={{
           opacity: toolbarVisible ? 1 : 0,
@@ -101,4 +108,10 @@ const StatsBg = styled.div<{ open: boolean }>`
   top: 4px;
   right: 4px;
   background-color: rgba(0, 0, 0, 0.5);
+`;
+const PlayerWrap = styled.div`
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 `;

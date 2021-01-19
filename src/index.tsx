@@ -7,7 +7,7 @@ import { debounce, pick } from 'lodash';
 import Stats from 'stats.js';
 import { TextureLoader } from 'three';
 import App from './components/App';
-import Hopalong from './hopalong';
+import Hopalong, { DEFAULT_LEVELS, DEFAULT_POINTS_SUBSET, DEFAULT_SUBSETS } from './hopalong';
 import textureUrl from './images/galaxy.png';
 import { AdvancedSettings, Settings } from './types/hopalong';
 import Detector from './util/Detector';
@@ -17,9 +17,10 @@ class Program {
   texture = new TextureLoader().load(textureUrl);
   stats = new Stats();
   settings: Partial<Settings> = {
-    pointsPerSubset: 32000,
-    levelCount: 7,
-    subsetCount: 7,
+    pointsPerSubset: DEFAULT_POINTS_SUBSET,
+    levelCount: DEFAULT_LEVELS,
+    subsetCount: DEFAULT_SUBSETS,
+    isPlaying: false,
   };
   debounceCreateHopalong = debounce(this.createHopalong, 1000);
 
@@ -69,7 +70,7 @@ class Program {
   }
 
   applySettings(settings: Partial<Settings>) {
-    const { pointsPerSubset, levelCount, subsetCount, ...simpleSettings } = settings;
+    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } = settings;
     const advancedSettings: Partial<AdvancedSettings> = {
       pointsPerSubset,
       levelCount,
@@ -86,6 +87,7 @@ class Program {
       ...this.settings,
       ...this.hopalong.getSettings(),
       ...newAdvancedSettings,
+      isPlaying,
     };
 
     if (Object.keys(newAdvancedSettings).length > 0) {
