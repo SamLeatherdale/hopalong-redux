@@ -1,7 +1,6 @@
 {
   "name": "hopalong-redux",
   "version": "1.0.0",
-  "main": "src/index.js",
   "license": "MIT",
   "private": true,
   "dependencies": {
@@ -9,7 +8,6 @@
     "chroma-js": "^2.1.0",
     "framer-motion": "^2.6.6",
     "lodash": "^4.17.20",
-    "parcel-plugin-pwa-manifest": "^3.0.10",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-icons": "^3.11.0",
@@ -22,6 +20,8 @@
     "uuid": "^8.3.0"
   },
   "devDependencies": {
+    "@parcel/packager-raw-url": "2.7.0",
+    "@parcel/packager-xml": "2.7.0",
     "@types/chroma-js": "^2.0.0",
     "@types/lodash": "^4.14.161",
     "@types/node": "^14.6.4",
@@ -37,8 +37,10 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.1.0",
-    "parcel-bundler": "^1.12.4",
+    "parcel": "^2.7.0",
+    "parcel-config-pwa-manifest": "^0.1.2",
     "prettier": "^2.1.1",
+    "process": "^0.11.10",
     "typescript": "^4.0.2"
   },
   "scripts": {
