@@ -55,6 +55,13 @@ export const DEFAULT_POINTS_SUBSET = 4000;
 export const DEFAULT_SUBSETS = 7;
 export const DEFAULT_LEVELS = 7;
 
+export const SPEED_DELTA = 0.25;
+export const SPEED_DELTA_EXTRA = SPEED_DELTA * 4;
+export const ROTATION_DELTA = 0.0005;
+export const ROTATION_DELTA_EXTRA = ROTATION_DELTA * 4;
+export const POINTS_DELTA = 1000;
+export const FOV_DELTA = 2;
+
 type HopalongParticleSet = ParticleSet<PointsMaterial>;
 
 type ConstructorProps = {
@@ -606,51 +613,31 @@ export default class Hopalong {
 
   onKeyDown(event: KeyboardEvent) {
     const { key } = event;
-    const keyUpper = key.toUpperCase();
+    const keyNormalised = key.length === 1 ? key.toUpperCase() : key;
 
-    const speedDelta = 0.5;
-    const speedDeltaExtra = 2;
-    const rotationSpeedDelta = 0.001;
-    const rotationSpeedDeltaExtra = 0.004;
-    const pointsPerSubsetDelta = 1000;
-    const fovDelta = 2;
+    const shortcuts: { [key: string]: () => void } = {
+      ArrowUp: () => this.changeSpeed(SPEED_DELTA),
+      W: () => this.changeSpeed(SPEED_DELTA_EXTRA),
+      ArrowDown: () => this.changeSpeed(-SPEED_DELTA),
+      S: () => this.changeSpeed(-SPEED_DELTA_EXTRA),
+      ArrowLeft: () => this.changeRotationSpeed(ROTATION_DELTA),
+      A: () => this.changeRotationSpeed(ROTATION_DELTA_EXTRA),
+      ArrowRight: () => this.changeRotationSpeed(-ROTATION_DELTA),
+      D: () => this.changeRotationSpeed(-ROTATION_DELTA_EXTRA),
+      F: () => this.changeFov(FOV_DELTA),
+      G: () => this.changeFov(-FOV_DELTA),
+      '.': () => this.changeLevelSubset(1),
+      ',': () => this.changeLevelSubset(-1),
+      P: () => this.changePointsPerSubset(POINTS_DELTA),
+      O: () => this.changePointsPerSubset(-POINTS_DELTA),
+      R: () => this.resetDefaults(),
+      L: () => this.setMouseLock(),
+      H: () => document.body.classList.toggle('hideCursor'),
+      C: () => this.recenterCamera(),
+    };
 
-    if (key === 'ArrowUp') {
-      this.changeSpeed(speedDelta);
-    } else if (keyUpper === 'W') {
-      this.changeSpeed(speedDeltaExtra);
-    } else if (key === 'ArrowDown') {
-      this.changeSpeed(-speedDelta);
-    } else if (keyUpper === 'S') {
-      this.changeSpeed(-speedDeltaExtra);
-    } else if (key === 'ArrowLeft') {
-      this.changeRotationSpeed(rotationSpeedDelta);
-    } else if (keyUpper === 'A') {
-      this.changeRotationSpeed(rotationSpeedDeltaExtra);
-    } else if (key === 'ArrowRight') {
-      this.changeRotationSpeed(-rotationSpeedDelta);
-    } else if (keyUpper === 'D') {
-      this.changeRotationSpeed(-rotationSpeedDeltaExtra);
-    } else if (keyUpper === 'F') {
-      this.changeFov(fovDelta);
-    } else if (keyUpper === 'G') {
-      this.changeFov(-fovDelta);
-    } else if (key === '.') {
-      this.changeLevelSubset(1);
-    } else if (key === ',') {
-      this.changeLevelSubset(-1);
-    } else if (keyUpper === 'P') {
-      this.changePointsPerSubset(pointsPerSubsetDelta);
-    } else if (keyUpper === 'O') {
-      this.changePointsPerSubset(-pointsPerSubsetDelta);
-    } else if (keyUpper === 'R') {
-      this.resetDefaults();
-    } else if (keyUpper === 'L') {
-      this.setMouseLock();
-    } else if (keyUpper === 'H') {
-      document.body.classList.toggle('hideCursor');
-    } else if (keyUpper === 'C') {
-      this.recenterCamera();
+    if (keyNormalised in shortcuts) {
+      shortcuts[keyNormalised]();
     }
   }
 

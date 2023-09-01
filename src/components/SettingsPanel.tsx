@@ -13,13 +13,13 @@ export type SettingsPanelProps = {
   onReset: () => unknown;
 };
 export default function SettingsPanel({ settings, onChange, onReset }: SettingsPanelProps) {
-  const NORMALISE_ROTATION_SPEED = 1000;
+  const NORMALISE_SPEED = 4;
+  const NORMALISE_ROTATION_SPEED = -2000;
   const NORMALISE_POINTS = 0.001;
   const [isAdvancedValues, toggleAdvancedValues] = useState(false);
-  const rotateDir = settings.rotationSpeed < 0;
   const maxValues = {
-    speed: [50, 100],
-    rotationSpeed: [50, 100],
+    speed: [50 * NORMALISE_SPEED, 100 * NORMALISE_SPEED],
+    rotationSpeed: [100, 200],
     cameraFov: [120, 180],
     points: [50, 100],
     subsetCount: [10, 20],
@@ -32,9 +32,6 @@ export default function SettingsPanel({ settings, onChange, onReset }: SettingsP
   const updateSetting = (newSettings: Partial<MenuSettings>) => {
     onChange(newSettings);
   };
-  const getRotationSpeed = (s: number, dir: boolean) => {
-    return Math.abs(s) * (dir ? -1 : 1);
-  };
 
   return (
     <Root>
@@ -44,33 +41,25 @@ export default function SettingsPanel({ settings, onChange, onReset }: SettingsP
             min={0}
             max={getMaxValues(maxValues.speed)}
             label="Speed"
-            value={settings.speed}
-            onChange={(speed) => updateSetting({ speed })}
-          />
-        </ListItem>
-        <ListItem>
-          <Slider
-            min={0}
-            max={getMaxValues(maxValues.rotationSpeed)}
-            label="Rotation speed"
-            value={Math.floor(Math.abs(settings.rotationSpeed * NORMALISE_ROTATION_SPEED))}
-            onChange={(rotationSpeed) =>
+            value={settings.speed * NORMALISE_SPEED}
+            onChange={(speed) =>
               updateSetting({
-                rotationSpeed: getRotationSpeed(
-                  rotationSpeed / NORMALISE_ROTATION_SPEED,
-                  rotateDir
-                ),
+                speed: speed / NORMALISE_SPEED,
               })
             }
           />
         </ListItem>
         <ListItem>
-          <Checkbox
-            checked={rotateDir}
-            onChange={(dir) => {
-              updateSetting({ rotationSpeed: getRotationSpeed(settings.rotationSpeed, dir) });
-            }}
-            label="Clockwise rotation"
+          <Slider
+            min={-getMaxValues(maxValues.rotationSpeed)}
+            max={getMaxValues(maxValues.rotationSpeed)}
+            label="Rotation speed"
+            value={Math.floor(settings.rotationSpeed * NORMALISE_ROTATION_SPEED)}
+            onChange={(rotationSpeed) =>
+              updateSetting({
+                rotationSpeed: rotationSpeed / NORMALISE_ROTATION_SPEED,
+              })
+            }
           />
         </ListItem>
         <ListItem>

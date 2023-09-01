@@ -24,7 +24,7 @@ export default function Slider({ value, min, max, label, onChange }: PropsType) 
   );
 }
 function stringify(value: number): string {
-  return value === 0 ? '' : value.toString();
+  return value.toString();
 }
 function numerify(value: string): number {
   const int = parseInt(value, 10);
@@ -50,6 +50,6 @@ const RangeInput = styled.input`
   flex: 1 1 auto;
 `;
 const NumberInput = styled(Input)`
-  width: 40px;
+  width: 45px;
   margin-left: 8px;
 `;
