@@ -28,5 +28,9 @@ module.exports = {
       },
     ],
   },
-  settings: {},
+  settings: {
+    react: {
+        version: 'detect',
+    }
+  },
 };

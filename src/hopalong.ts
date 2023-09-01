@@ -93,9 +93,7 @@ export default class Hopalong {
   windowHalfY = window.innerHeight / 2;
 
   speed = DEFAULT_SPEED;
-  speedDelta = 0.5;
   rotationSpeed = DEFAULT_ROTATION_SPEED;
-  rotationSpeedDelta = 0.001;
 
   numPointsSubset = DEFAULT_POINTS_SUBSET;
   numSubsets = DEFAULT_SUBSETS;
@@ -184,7 +182,7 @@ export default class Hopalong {
         // Updating from Geometry to BufferGeometry
         // https://github.com/mrdoob/three.js/pull/21031
         // https://discourse.threejs.org/t/three-geometry-will-be-removed-from-core-with-r125/22401
-        const vertices = this.orbit.subsets[s].map(({ vertex }) => vertex)
+        const vertices = this.orbit.subsets[s].map(({ vertex }) => vertex);
         const geometry = new BufferGeometry();
         geometry.setFromPoints(vertices);
 
@@ -283,7 +281,7 @@ export default class Hopalong {
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
-          const vertices = this.orbit.subsets[mySubset].map(({ vertex }) => vertex)
+          const vertices = this.orbit.subsets[mySubset].map(({ vertex }) => vertex);
           const geometry = particleSet.particles.geometry;
 
           geometry.setFromPoints(vertices);
@@ -509,6 +507,11 @@ export default class Hopalong {
     };
   }
 
+  changeFov(delta: number) {
+    const newFov = this.camera.fov + delta;
+    this.setCameraFOV(newFov);
+  }
+
   changeSpeed(delta: number) {
     const newSpeed = this.speed + delta;
     if (newSpeed >= 0) {
@@ -535,14 +538,32 @@ export default class Hopalong {
     const { key } = event;
     const keyUpper = key.toUpperCase();
 
-    if (key === 'ArrowUp' || keyUpper === 'W') {
-      this.changeSpeed(this.speedDelta);
-    } else if (key === 'ArrowDown' || keyUpper === 'S') {
-      this.changeSpeed(-this.speedDelta);
-    } else if (key === 'ArrowLeft' || keyUpper === 'A') {
-      this.changeRotationSpeed(this.rotationSpeedDelta);
-    } else if (key === 'ArrowRight' || keyUpper === 'D') {
-      this.changeRotationSpeed(this.rotationSpeedDelta);
+    const speedDelta = 0.5;
+    const speedDeltaExtra = 2;
+    const rotationSpeedDelta = 0.001;
+    const rotationSpeedDeltaExtra = 0.004;
+    const fovDelta = 2;
+
+    if (key === 'ArrowUp') {
+      this.changeSpeed(speedDelta);
+    } else if (keyUpper === 'W') {
+      this.changeSpeed(speedDeltaExtra);
+    } else if (key === 'ArrowDown') {
+      this.changeSpeed(-speedDelta);
+    } else if (keyUpper === 'S') {
+      this.changeSpeed(-speedDeltaExtra);
+    } else if (key === 'ArrowLeft') {
+      this.changeRotationSpeed(rotationSpeedDelta);
+    } else if (keyUpper === 'A') {
+      this.changeRotationSpeed(rotationSpeedDeltaExtra);
+    } else if (key === 'ArrowRight') {
+      this.changeRotationSpeed(-rotationSpeedDelta);
+    } else if (keyUpper === 'D') {
+      this.changeRotationSpeed(-rotationSpeedDeltaExtra);
+    } else if (keyUpper === 'F') {
+      this.changeFov(fovDelta);
+    } else if (keyUpper === 'G') {
+      this.changeFov(-fovDelta);
     } else if (keyUpper === 'R') {
       this.resetDefaults();
     } else if (keyUpper === 'L') {

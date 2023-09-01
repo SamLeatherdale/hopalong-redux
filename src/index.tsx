@@ -13,7 +13,7 @@ import Hopalong, {
   DEFAULT_POINTS_SUBSET,
   DEFAULT_ROTATION_SPEED,
   DEFAULT_SPEED,
-  DEFAULT_SUBSETS
+  DEFAULT_SUBSETS,
 } from './hopalong';
 import textureUrl from './images/galaxy.png';
 import { AdvancedSettings, Settings } from './types/hopalong';
@@ -31,7 +31,7 @@ class Program {
     rotationSpeed: DEFAULT_ROTATION_SPEED,
     cameraFov: DEFAULT_FOV,
     isPlaying: false,
-    mouseLocked: false
+    mouseLocked: false,
   };
   debounceCreateHopalong = debounce(this.createHopalong, 1000);
 
@@ -59,8 +59,6 @@ class Program {
 
     // Apply any saved settings from last instance
     this.hopalong.applySettings(this.settings);
-
-    (window as any).hopalong = this.hopalong;
   }
 
   renderReact(settings: Settings) {
@@ -81,7 +79,8 @@ class Program {
   }
 
   applySettings(partialSettings: Partial<Settings>) {
-    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } = partialSettings;
+    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } =
+      partialSettings;
     const advancedSettings: Partial<AdvancedSettings> = {
       pointsPerSubset,
       levelCount,
@@ -90,7 +89,7 @@ class Program {
     const newAdvancedSettings: Partial<AdvancedSettings> = pick(
       advancedSettings,
       Object.entries(advancedSettings)
-        .filter(([k, v]) => typeof v !== 'undefined')
+        .filter(([, v]) => typeof v !== 'undefined')
         .map(([k]) => k)
     );
     this.hopalong.applySettings(simpleSettings);
