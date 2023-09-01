@@ -5,8 +5,8 @@
 import autoBind from 'auto-bind';
 import {
   AdditiveBlending,
+  BufferGeometry,
   FogExp2,
-  Geometry,
   PerspectiveCamera,
   Points,
   PointsMaterial,
@@ -48,15 +48,15 @@ const D_MAX = 10;
 const E_MIN = 0;
 const E_MAX = 12;
 
-const DEFAULT_SPEED = 8;
-const DEFAULT_ROTATION_SPEED = 0.005;
-const DEFAULT_FOV = 60;
+export const DEFAULT_SPEED = 8;
+export const DEFAULT_ROTATION_SPEED = 0.005;
+export const DEFAULT_FOV = 60;
 
 export const DEFAULT_POINTS_SUBSET = 4000;
 export const DEFAULT_SUBSETS = 7;
 export const DEFAULT_LEVELS = 7;
 
-type HopalongParticleSet = ParticleSet<Geometry, PointsMaterial>;
+type HopalongParticleSet = ParticleSet<PointsMaterial>;
 
 type ConstructorProps = {
   advancedSettings: Partial<AdvancedSettings>;
@@ -181,10 +181,12 @@ export default class Hopalong {
     // Create particle systems
     for (let k = 0; k < this.numLevels; k++) {
       for (let s = 0; s < this.numSubsets; s++) {
-        const geometry = new Geometry();
-        for (let i = 0; i < this.numPointsSubset; i++) {
-          geometry.vertices.push(this.orbit.subsets[s][i].vertex);
-        }
+        // Updating from Geometry to BufferGeometry
+        // https://github.com/mrdoob/three.js/pull/21031
+        // https://discourse.threejs.org/t/three-geometry-will-be-removed-from-core-with-r125/22401
+        const vertices = this.orbit.subsets[s].map(({ vertex }) => vertex)
+        const geometry = new BufferGeometry();
+        geometry.setFromPoints(vertices);
 
         // Updating from ParticleSystem to points
         // https://github.com/mrdoob/three.js/issues/4065
@@ -281,7 +283,12 @@ export default class Hopalong {
 
         if (particleSet.needsUpdate) {
           // update the geometry and color
-          particles.geometry.verticesNeedUpdate = true;
+          const vertices = this.orbit.subsets[mySubset].map(({ vertex }) => vertex)
+          const geometry = particleSet.particles.geometry;
+
+          geometry.setFromPoints(vertices);
+          particles.geometry.attributes.position.needsUpdate = true;
+
           myMaterial.color.setHSL(
             ...hsvToHsl(this.hueValues[mySubset], DEF_SATURATION, DEF_BRIGHTNESS)
           );

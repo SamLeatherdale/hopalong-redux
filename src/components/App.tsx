@@ -54,7 +54,6 @@ export default function App({ stats, settings, onSettingsChange, onCenter, onRes
       onCenter={onCenter}
     />
   );
-  console.log(isPlaying);
 
   return (
     <>

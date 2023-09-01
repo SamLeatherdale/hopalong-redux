@@ -1,4 +1,4 @@
-import { BufferGeometry, Geometry, Material, Points, Vector3 } from 'three';
+import { Material, Points, Vector3 } from 'three';
 
 export type OrbitParams<T> = {
   a: T;
@@ -22,7 +22,6 @@ export type SubsetPoint = {
   vertex: Vector3;
 };
 export type ParticleSet<
-  TGeometry extends Geometry | BufferGeometry,
   TMaterial extends Material | Material[]
 > = {
   /** The material/colour used to draw this ParticleSet */
@@ -34,7 +33,7 @@ export type ParticleSet<
   /** Whether the colour has been updated since last render */
   needsUpdate: boolean;
   /** The underlying location data of the particles */
-  particles: Points<TGeometry, TMaterial>;
+  particles: Points;
 };
 /** Settings that can be adjusted while the simulation is running */
 export type SimpleMenuSettings = {
@@ -42,7 +41,7 @@ export type SimpleMenuSettings = {
   rotationSpeed: number;
   cameraFov: number;
 };
-export type SimpleSettings = SimpleMenuSettings & ToolbarSettings;
+export type SimpleSettings = SimpleMenuSettings & Omit<ToolbarSettings, 'isPlaying'>;
 /** Settings that require recreating the simulation */
 export type AdvancedSettings = {
   pointsPerSubset: number;

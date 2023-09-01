@@ -7,7 +7,14 @@ import { debounce, pick } from 'lodash';
 import Stats from 'stats.js';
 import { TextureLoader } from 'three';
 import App from './components/App';
-import Hopalong, { DEFAULT_LEVELS, DEFAULT_POINTS_SUBSET, DEFAULT_SUBSETS } from './hopalong';
+import Hopalong, {
+  DEFAULT_FOV,
+  DEFAULT_LEVELS,
+  DEFAULT_POINTS_SUBSET,
+  DEFAULT_ROTATION_SPEED,
+  DEFAULT_SPEED,
+  DEFAULT_SUBSETS
+} from './hopalong';
 import textureUrl from './images/galaxy.png';
 import { AdvancedSettings, Settings } from './types/hopalong';
 import Detector from './util/Detector';
@@ -16,11 +23,15 @@ class Program {
   hopalong: Hopalong;
   texture = new TextureLoader().load(textureUrl);
   stats = new Stats();
-  settings: Partial<Settings> = {
+  settings: Settings = {
     pointsPerSubset: DEFAULT_POINTS_SUBSET,
     levelCount: DEFAULT_LEVELS,
     subsetCount: DEFAULT_SUBSETS,
+    speed: DEFAULT_SPEED,
+    rotationSpeed: DEFAULT_ROTATION_SPEED,
+    cameraFov: DEFAULT_FOV,
     isPlaying: false,
+    mouseLocked: false
   };
   debounceCreateHopalong = debounce(this.createHopalong, 1000);
 
@@ -69,8 +80,8 @@ class Program {
     );
   }
 
-  applySettings(settings: Partial<Settings>) {
-    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } = settings;
+  applySettings(partialSettings: Partial<Settings>) {
+    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } = partialSettings;
     const advancedSettings: Partial<AdvancedSettings> = {
       pointsPerSubset,
       levelCount,
@@ -83,18 +94,19 @@ class Program {
         .map(([k]) => k)
     );
     this.hopalong.applySettings(simpleSettings);
-    this.settings = {
+    const settings: Settings = {
       ...this.settings,
       ...this.hopalong.getSettings(),
       ...newAdvancedSettings,
-      isPlaying,
+      isPlaying: isPlaying ?? this.settings.isPlaying,
     };
+    this.settings = settings;
 
     if (Object.keys(newAdvancedSettings).length > 0) {
       // We need to create a new instance for advanced settings
       this.debounceCreateHopalong(newAdvancedSettings);
       // In the meantime, update settings with latest changes
-      this.renderReact(this.settings);
+      this.renderReact(settings);
     }
   }
 }
