@@ -28,6 +28,7 @@ const Dropdown: FunctionComponent<PropsType> = ({ header, children }) => {
 export default Dropdown;
 
 const Header = styled.header`
+  cursor: pointer;
   display: flex;
   justify-content: center;
   align-items: center;

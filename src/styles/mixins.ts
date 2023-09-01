@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 
 export const UnstyledButton = styled.button`
+  cursor: pointer;
   border: none;
   margin: 0;
   padding: 0;
