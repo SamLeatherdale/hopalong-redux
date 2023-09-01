@@ -10,6 +10,7 @@ export default function WebGLStats({ stats }: { stats: Stats }) {
       return;
     }
     ref.current.appendChild(stats.dom);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <StatsReset ref={ref} />;

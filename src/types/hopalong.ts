@@ -21,9 +21,7 @@ export type SubsetPoint = {
   y: number;
   vertex: Vector3;
 };
-export type ParticleSet<
-  TMaterial extends Material | Material[]
-> = {
+export type ParticleSet<TMaterial extends Material | Material[]> = {
   /** The material/colour used to draw this ParticleSet */
   myMaterial: TMaterial;
   /** Index of the level this ParticleSet belongs to */
