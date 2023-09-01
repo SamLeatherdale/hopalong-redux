@@ -16,12 +16,11 @@ import {
   WebGLRenderer,
 } from 'three';
 import {
-  AdvancedSettings,
   Orbit,
   OrbitParams,
   ParticleSet,
   Settings,
-  SimpleSettings,
+  SimSettings,
   SubsetPoint,
 } from './types/hopalong';
 import { hsvToHsl } from './util/color';
@@ -59,7 +58,7 @@ export const DEFAULT_LEVELS = 7;
 type HopalongParticleSet = ParticleSet<PointsMaterial>;
 
 type ConstructorProps = {
-  advancedSettings: Partial<AdvancedSettings>;
+  settings: Partial<SimSettings>;
   canvas: HTMLCanvasElement;
   texture: Texture;
   stats: Stats;
@@ -81,23 +80,22 @@ export default class Hopalong {
   scene: Scene;
   renderer: WebGLRenderer;
   stats: Stats;
-  onSettingsUpdate: (settings: SimpleSettings) => unknown;
+  onSettingsUpdate: (settings: SimSettings) => unknown;
 
   hueValues: number[] = [];
 
   mouseX = 0;
   mouseY = 0;
-  mouseLocked = false;
+  private mouseLocked: boolean;
 
   windowHalfX = window.innerWidth / 2;
   windowHalfY = window.innerHeight / 2;
 
-  speed = DEFAULT_SPEED;
-  rotationSpeed = DEFAULT_ROTATION_SPEED;
-
-  numPointsSubset = DEFAULT_POINTS_SUBSET;
-  numSubsets = DEFAULT_SUBSETS;
-  numLevels = DEFAULT_LEVELS;
+  private speed: number;
+  private rotationSpeed: number;
+  private numPointsSubset: number;
+  private numSubsets: number;
+  private numLevels: number;
 
   // Orbit data
   orbit: Orbit<number> = {
@@ -113,16 +111,19 @@ export default class Hopalong {
   updateIntervalKey: number;
   destroyed = false;
 
-  constructor({ advancedSettings, canvas, texture, stats, onSettingsUpdate }: ConstructorProps) {
+  constructor({ settings, canvas, texture, stats, onSettingsUpdate }: ConstructorProps) {
     autoBind(this);
 
-    const { subsetCount, levelCount, pointsPerSubset } = advancedSettings;
-    this.numSubsets = subsetCount || DEFAULT_SUBSETS;
-    this.numLevels = levelCount || DEFAULT_LEVELS;
-    this.numPointsSubset = pointsPerSubset || DEFAULT_POINTS_SUBSET;
+    this.speed = settings.speed || DEFAULT_SPEED;
+    this.rotationSpeed = settings.rotationSpeed || DEFAULT_ROTATION_SPEED;
+    this.numSubsets = settings.subsetCount || DEFAULT_SUBSETS;
+    this.numLevels = settings.levelCount || DEFAULT_LEVELS;
+    this.numPointsSubset = settings.pointsPerSubset || DEFAULT_POINTS_SUBSET;
+    this.mouseLocked = settings.mouseLocked || false;
+
     this.texture = texture;
     this.stats = stats;
-    this.initOrbit();
+    this.initOrbit(this.numSubsets, this.numPointsSubset);
     this.init(canvas);
     this.animate();
     this.onSettingsUpdate = onSettingsUpdate;
@@ -135,11 +136,12 @@ export default class Hopalong {
     this.destroyed = true;
   }
 
-  initOrbit() {
+  initOrbit(numSubsets: number, numPointsSubset: number) {
     // Initialize data points
-    for (let i = 0; i < this.numSubsets; i++) {
+    this.orbit.subsets = [];
+    for (let i = 0; i < numSubsets; i++) {
       const subsetPoints: SubsetPoint[] = [];
-      for (let j = 0; j < this.numPointsSubset; j++) {
+      for (let j = 0; j < numPointsSubset; j++) {
         subsetPoints[j] = {
           x: 0,
           y: 0,
@@ -173,47 +175,13 @@ export default class Hopalong {
     this.scene = new Scene();
     this.scene.fog = new FogExp2(0x000000, 0.001);
 
-    this.generateOrbit();
-    this.generateHues();
+    this.generateOrbit(this.numSubsets, this.numPointsSubset);
+    this.generateHues(this.numSubsets);
 
     // Create particle systems
     for (let k = 0; k < this.numLevels; k++) {
       for (let s = 0; s < this.numSubsets; s++) {
-        // Updating from Geometry to BufferGeometry
-        // https://github.com/mrdoob/three.js/pull/21031
-        // https://discourse.threejs.org/t/three-geometry-will-be-removed-from-core-with-r125/22401
-        const vertices = this.orbit.subsets[s].map(({ vertex }) => vertex);
-        const geometry = new BufferGeometry();
-        geometry.setFromPoints(vertices);
-
-        // Updating from ParticleSystem to points
-        // https://github.com/mrdoob/three.js/issues/4065
-        const materials = new PointsMaterial({
-          size: SPRITE_SIZE,
-          map: this.texture,
-          blending: AdditiveBlending,
-          depthTest: false,
-          transparent: false,
-        });
-
-        materials.color.setHSL(...hsvToHsl(this.hueValues[s], DEF_SATURATION, DEF_BRIGHTNESS));
-
-        const particles = new Points(geometry, materials);
-        particles.position.x = 0;
-        particles.position.y = 0;
-        particles.position.z =
-          -LEVEL_DEPTH * k - (s * LEVEL_DEPTH) / this.numSubsets + SCALE_FACTOR / 2;
-
-        const particleSet: HopalongParticleSet = {
-          myMaterial: materials,
-          myLevel: k,
-          mySubset: s,
-          needsUpdate: false,
-          particles,
-        };
-
-        this.scene.add(particles);
-        this.particleSets.push(particleSet);
+        this.generateParticleSet(k, s);
       }
     }
 
@@ -222,6 +190,83 @@ export default class Hopalong {
 
     // Schedule orbit regeneration
     this.updateIntervalKey = window.setInterval(this.updateOrbit, 3000);
+  }
+
+  setLevelSubsetCount(
+    partialSettings: Pick<Partial<SimSettings>, 'levelCount' | 'pointsPerSubset' | 'subsetCount'>
+  ) {
+    const { levelCount, pointsPerSubset, subsetCount } = partialSettings;
+    console.log('setLevelSubsetCount', partialSettings);
+    this.numLevels = levelCount || this.numLevels;
+    this.numSubsets = subsetCount || this.numSubsets;
+    this.numPointsSubset = pointsPerSubset || this.numPointsSubset;
+
+    // First, generate the new orbits
+    if (subsetCount !== undefined || pointsPerSubset !== undefined) {
+      this.initOrbit(this.numSubsets, this.numPointsSubset);
+      this.updateOrbit();
+    }
+
+    const exists = new Set();
+
+    // Delete any particle sets that are no longer needed
+    this.particleSets = this.particleSets.filter(({ myLevel, particles, mySubset }) => {
+      const keep = myLevel < this.numLevels && mySubset < this.numSubsets;
+      if (!keep) {
+        this.scene.remove(particles);
+      } else {
+        exists.add(`${myLevel}-${mySubset}`);
+      }
+      return keep;
+    });
+
+    // Generate any new particle sets
+    for (let k = 0; k < this.numLevels; k++) {
+      for (let s = 0; s < this.numSubsets; s++) {
+        if (!exists.has(`${k}-${s}`)) {
+          this.generateParticleSet(k, s);
+        }
+      }
+    }
+    this.fireSettingsChange();
+  }
+
+  generateParticleSet(level: number, subset: number) {
+    // Updating from Geometry to BufferGeometry
+    // https://github.com/mrdoob/three.js/pull/21031
+    // https://discourse.threejs.org/t/three-geometry-will-be-removed-from-core-with-r125/22401
+    const vertices = this.orbit.subsets[subset].map(({ vertex }) => vertex);
+    const geometry = new BufferGeometry();
+    geometry.setFromPoints(vertices);
+
+    // Updating from ParticleSystem to points
+    // https://github.com/mrdoob/three.js/issues/4065
+    const materials = new PointsMaterial({
+      size: SPRITE_SIZE,
+      map: this.texture,
+      blending: AdditiveBlending,
+      depthTest: false,
+      transparent: false,
+    });
+
+    materials.color.setHSL(...hsvToHsl(this.hueValues[subset], DEF_SATURATION, DEF_BRIGHTNESS));
+
+    const particles = new Points(geometry, materials);
+    particles.position.x = 0;
+    particles.position.y = 0;
+    particles.position.z =
+      -LEVEL_DEPTH * level - (subset * LEVEL_DEPTH) / this.numSubsets + SCALE_FACTOR / 2;
+
+    const particleSet: HopalongParticleSet = {
+      myMaterial: materials,
+      myLevel: level,
+      mySubset: subset,
+      needsUpdate: false,
+      particles,
+    };
+
+    this.scene.add(particles);
+    this.particleSets.push(particleSet);
   }
 
   addEventListeners() {
@@ -303,22 +348,18 @@ export default class Hopalong {
   ///////////////////////////////////////////////
 
   updateOrbit() {
-    this.generateOrbit();
-    this.generateHues();
+    this.generateOrbit(this.numSubsets, this.numPointsSubset);
+    this.generateHues(this.numSubsets);
     for (const particleSet of this.particleSets.values()) {
       particleSet.needsUpdate = true;
     }
   }
 
-  generateHues() {
-    for (let s = 0; s < this.numSubsets; s++) {
-      this.hueValues[s] = Math.random();
-    }
+  generateHues(numSubsets: number) {
+    this.hueValues = new Array(numSubsets).fill(0).map(() => Math.random());
   }
 
-  generateOrbit() {
-    let x, y, z, x1;
-
+  generateOrbit(numSubsets: number, numPointsSubset: number) {
     this.prepareOrbit();
 
     const { a, b, c, d, e } = this.orbitParams;
@@ -329,7 +370,6 @@ export default class Hopalong {
     const dl = d;
     const el = e;
     const subsets = this.orbit.subsets;
-    const num_points_subset_l = this.numPointsSubset;
     const scale_factor_l = SCALE_FACTOR;
 
     let xMin = 0,
@@ -338,14 +378,16 @@ export default class Hopalong {
       yMax = 0;
     const choice = Math.random();
 
-    for (let s = 0; s < this.numSubsets; s++) {
+    for (let s = 0; s < numSubsets; s++) {
       // Use a different starting point for each orbit subset
-      x = s * 0.005 * (0.5 - Math.random());
-      y = s * 0.005 * (0.5 - Math.random());
+      let x = s * 0.005 * (0.5 - Math.random());
+      let y = s * 0.005 * (0.5 - Math.random());
+      let z: number;
+      let x1: number;
 
       const curSubset = subsets[s];
 
-      for (let i = 0; i < num_points_subset_l; i++) {
+      for (let i = 0; i < numPointsSubset; i++) {
         // Iteration formula (generalization of the Barry Martin's original one)
 
         if (choice < 0.5) {
@@ -395,7 +437,7 @@ export default class Hopalong {
     // Normalize and update vertex data
     for (let s = 0; s < this.numSubsets; s++) {
       const curSubset = subsets[s];
-      for (let i = 0; i < num_points_subset_l; i++) {
+      for (let i = 0; i < numPointsSubset; i++) {
         curSubset[i].vertex.setX(scaleX * (curSubset[i].x - xMin) - scale_factor_l);
         curSubset[i].vertex.setY(scaleY * (curSubset[i].y - yMin) - scale_factor_l);
       }
@@ -477,7 +519,8 @@ export default class Hopalong {
     return this.mouseY;
   }
 
-  applySettings({ speed, rotationSpeed, mouseLocked, cameraFov }: Partial<SimpleSettings>) {
+  applySettings(settings: Partial<SimSettings>) {
+    const { speed, rotationSpeed, mouseLocked, cameraFov } = settings;
     if (typeof speed !== 'undefined') {
       this.speed = speed;
     }
@@ -490,20 +533,27 @@ export default class Hopalong {
     if (typeof cameraFov !== 'undefined') {
       this.setCameraFOV(cameraFov);
     }
-    this.fireSettingsChange();
+    const { levelCount, subsetCount, pointsPerSubset } = settings;
+    const advancedSettings = { levelCount, subsetCount, pointsPerSubset };
+    if (Object.values(advancedSettings).some((value) => typeof value !== 'undefined')) {
+      this.setLevelSubsetCount(advancedSettings);
+    }
   }
 
   fireSettingsChange() {
     this.onSettingsUpdate(this.getSettings());
   }
 
-  getSettings(): SimpleSettings {
+  getSettings(): SimSettings {
     const { speed, rotationSpeed, mouseLocked } = this;
     return {
       speed,
       rotationSpeed,
       mouseLocked,
       cameraFov: this.camera.fov,
+      levelCount: this.numLevels,
+      subsetCount: this.numSubsets,
+      pointsPerSubset: this.numPointsSubset,
     };
   }
 
@@ -527,10 +577,30 @@ export default class Hopalong {
     this.fireSettingsChange();
   }
 
+  changeLevelSubset(delta: number) {
+    this.setLevelSubsetCount({
+      levelCount: this.numLevels + delta,
+      subsetCount: this.numSubsets + delta,
+    });
+  }
+
+  changePointsPerSubset(delta: number) {
+    this.setLevelSubsetCount({
+      pointsPerSubset: this.numPointsSubset + delta,
+    });
+  }
+
   resetDefaults() {
     this.speed = DEFAULT_SPEED;
     this.rotationSpeed = DEFAULT_ROTATION_SPEED;
     this.camera.fov = DEFAULT_FOV;
+    this.mouseLocked = false;
+
+    this.setLevelSubsetCount({
+      levelCount: DEFAULT_LEVELS,
+      subsetCount: DEFAULT_SUBSETS,
+      pointsPerSubset: DEFAULT_POINTS_SUBSET,
+    });
     this.fireSettingsChange();
   }
 
@@ -542,6 +612,7 @@ export default class Hopalong {
     const speedDeltaExtra = 2;
     const rotationSpeedDelta = 0.001;
     const rotationSpeedDeltaExtra = 0.004;
+    const pointsPerSubsetDelta = 1000;
     const fovDelta = 2;
 
     if (key === 'ArrowUp') {
@@ -564,6 +635,14 @@ export default class Hopalong {
       this.changeFov(fovDelta);
     } else if (keyUpper === 'G') {
       this.changeFov(-fovDelta);
+    } else if (key === '.') {
+      this.changeLevelSubset(1);
+    } else if (key === ',') {
+      this.changeLevelSubset(-1);
+    } else if (keyUpper === 'P') {
+      this.changePointsPerSubset(pointsPerSubsetDelta);
+    } else if (keyUpper === 'O') {
+      this.changePointsPerSubset(-pointsPerSubsetDelta);
     } else if (keyUpper === 'R') {
       this.resetDefaults();
     } else if (keyUpper === 'L') {

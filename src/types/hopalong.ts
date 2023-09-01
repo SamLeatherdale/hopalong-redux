@@ -34,23 +34,18 @@ export type ParticleSet<TMaterial extends Material | Material[]> = {
   particles: Points;
 };
 /** Settings that can be adjusted while the simulation is running */
-export type SimpleMenuSettings = {
+export type SimSettings = {
   speed: number;
   rotationSpeed: number;
   cameraFov: number;
-};
-export type SimpleSettings = SimpleMenuSettings & Omit<ToolbarSettings, 'isPlaying'>;
-/** Settings that require recreating the simulation */
-export type AdvancedSettings = {
   pointsPerSubset: number;
   subsetCount: number;
   levelCount: number;
-};
-
-export type MenuSettings = SimpleMenuSettings & AdvancedSettings;
-export type ToolbarSettings = {
   mouseLocked: boolean;
+};
+export type MenuSettings = Omit<SimSettings, 'mouseLocked'>;
+export type ToolbarSettings = {
   isPlaying: boolean;
 };
-export type Settings = MenuSettings & ToolbarSettings;
+export type Settings = SimSettings & ToolbarSettings;
 export type OnSettingsChange<T> = (settings: Partial<T>) => unknown;

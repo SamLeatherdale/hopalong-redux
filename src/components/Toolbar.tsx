@@ -68,7 +68,7 @@ export default function Toolbar({
           </IconButton>
         </ListItem>
         <ListItem>
-          <IconButton className={classes({ active: mouseLocked })} onClick={updateIsPlaying}>
+          <IconButton className={classes({ active: isPlaying })} onClick={updateIsPlaying}>
             {isPlaying ? <FaPause /> : <FaPlay />}
           </IconButton>
         </ListItem>

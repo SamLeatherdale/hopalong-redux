@@ -38,7 +38,7 @@ const Heading = styled.h2`
 `;
 
 const Content = styled.div`
-  padding: 16px;
+  margin-top: 16px;
   &.hide {
     display: none;
   }

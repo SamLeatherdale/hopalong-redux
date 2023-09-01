@@ -8,19 +8,38 @@ export default function InfoPanel() {
     <InfoList>
       <InfoBox>
         <Heading2>Keyboard controls</Heading2>
+        <Heading3>UI</Heading3>
         <KeyboardList>
           <li>
-            <Code>[Mouse Move]</Code> Change camera position - <Code>[L]</Code> Lock camera position
+            <Code>[Mouse Move]</Code> Change camera position
+            <Gap />
+            <Code>[L]</Code> Lock camera position
           </li>
           <li>
             <Code>[C]</Code> Center and lock camera position
+            <Gap />
+            <Code>[F/G]</Code> Change FOV
           </li>
           <li>
-            <Code>[Up/Down or W/S]</Code> Change speed - <Code>[Left/Right or A/D]</Code> Change
-            rotation
+            <Code>[H]</Code> Toggle cursor
+            <Gap />
+            <Code>[F11]</Code> Toggle fullscreen
+          </li>
+        </KeyboardList>
+        <Heading3>Simulation</Heading3>
+        <KeyboardList>
+          <li>
+            <Code>[Up/Down or W/S]</Code> Change speed
+            <Gap />
+            <Code>[Left/Right or A/D]</Code> Change rotation
           </li>
           <li>
-            <Code>[H]</Code> Toggle cursor - <Code>[F11]</Code> Toggle fullscreen
+            <Code>[&lt;/&gt;]</Code> Change level/subset count
+            <Gap />
+            <Code>[O/P]</Code> Change particle count
+          </li>
+          <li>
+            <Code>[R]</Code> Reset all settings
           </li>
         </KeyboardList>
       </InfoBox>
@@ -70,6 +89,9 @@ const externalLink = {
   target: '_blank',
   rel: 'noopener',
 };
+const Gap = styled.span`
+  margin-right: 24px;
+`;
 const KeyboardList = styled(UnstyledUl)`
   > * + * {
     margin-top: 2px;
@@ -83,6 +105,11 @@ const InfoList = styled.article`
 const Heading2 = styled.h2`
   margin: 0 0 8px;
   font-size: 24px;
+`;
+const Heading3 = styled.h3`
+  margin: 16px 0 8px;
+  font-size: 18px;
+  text-decoration: underline;
 `;
 const InfoBox = styled(Box)`
   p,

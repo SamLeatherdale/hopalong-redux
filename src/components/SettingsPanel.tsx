@@ -91,10 +91,7 @@ export default function SettingsPanel({ settings, onChange, onReset }: SettingsP
         Reset Defaults
       </Button>
       <Dropdown header="Advanced Settings">
-        <SettingsList>
-          <ListItem title="Increases maximums for sliders">
-            <Checkbox checked={isAdvancedValues} onChange={toggleAdvancedValues} label="🤯 mode" />
-          </ListItem>
+        <BorderedSettingsList>
           <ListItem>
             <Slider
               min={1}
@@ -134,7 +131,14 @@ export default function SettingsPanel({ settings, onChange, onReset }: SettingsP
               }
             />
           </ListItem>
-        </SettingsList>
+          <ListItem title="Increases maximums for sliders">
+            <Checkbox
+              checked={isAdvancedValues}
+              onChange={toggleAdvancedValues}
+              label="🤯 Increase all limits"
+            />
+          </ListItem>
+        </BorderedSettingsList>
       </Dropdown>
     </Root>
   );
@@ -150,5 +154,10 @@ const SettingsList = styled(UnstyledUl)`
   display: grid;
   grid-template-columns: 1fr;
   row-gap: 16px;
+`;
+const BorderedSettingsList = styled(SettingsList)`
+  padding: 16px 8px;
+  border: 1px solid white;
+  border-radius: 4px;
 `;
 const ListItem = styled.li``;

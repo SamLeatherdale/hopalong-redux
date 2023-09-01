@@ -4,6 +4,7 @@ import { UnstyledButton } from '../../styles/mixins';
 export const Button = styled(UnstyledButton).attrs(({ type }) => ({
   type: type || 'button',
 }))<{ fullWidth?: boolean }>`
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;

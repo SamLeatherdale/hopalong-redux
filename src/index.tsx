@@ -3,7 +3,6 @@ import React from 'react';
 import { render } from 'react-dom';
 import 'reset.css';
 import './main.css';
-import { debounce, pick } from 'lodash';
 import Stats from 'stats.js';
 import { TextureLoader } from 'three';
 import App from './components/App';
@@ -16,7 +15,7 @@ import Hopalong, {
   DEFAULT_SUBSETS,
 } from './hopalong';
 import textureUrl from './images/galaxy.png';
-import { AdvancedSettings, Settings } from './types/hopalong';
+import { Settings, SimSettings } from './types/hopalong';
 import Detector from './util/Detector';
 
 class Program {
@@ -33,14 +32,13 @@ class Program {
     isPlaying: false,
     mouseLocked: false,
   };
-  debounceCreateHopalong = debounce(this.createHopalong, 1000);
 
   constructor() {
     autoBind(this);
     this.createHopalong();
   }
 
-  createHopalong(advancedSettings: Partial<AdvancedSettings> = {}) {
+  createHopalong(settings: Partial<SimSettings> = {}) {
     if (this.hopalong) {
       this.hopalong.destroy();
     }
@@ -50,15 +48,12 @@ class Program {
     }
 
     this.hopalong = new Hopalong({
-      advancedSettings,
+      settings,
       canvas,
       texture: this.texture,
       stats: this.stats,
       onSettingsUpdate: (settings) => this.renderReact(settings),
     });
-
-    // Apply any saved settings from last instance
-    this.hopalong.applySettings(this.settings);
   }
 
   renderReact(settings: Settings) {
@@ -79,34 +74,15 @@ class Program {
   }
 
   applySettings(partialSettings: Partial<Settings>) {
-    const { pointsPerSubset, levelCount, subsetCount, isPlaying, ...simpleSettings } =
-      partialSettings;
-    const advancedSettings: Partial<AdvancedSettings> = {
-      pointsPerSubset,
-      levelCount,
-      subsetCount,
-    };
-    const newAdvancedSettings: Partial<AdvancedSettings> = pick(
-      advancedSettings,
-      Object.entries(advancedSettings)
-        .filter(([, v]) => typeof v !== 'undefined')
-        .map(([k]) => k)
-    );
-    this.hopalong.applySettings(simpleSettings);
+    const { isPlaying, ...simSettings } = partialSettings;
+    this.hopalong.applySettings(simSettings);
     const settings: Settings = {
       ...this.settings,
       ...this.hopalong.getSettings(),
-      ...newAdvancedSettings,
       isPlaying: isPlaying ?? this.settings.isPlaying,
     };
     this.settings = settings;
-
-    if (Object.keys(newAdvancedSettings).length > 0) {
-      // We need to create a new instance for advanced settings
-      this.debounceCreateHopalong(newAdvancedSettings);
-      // In the meantime, update settings with latest changes
-      this.renderReact(settings);
-    }
+    this.renderReact(settings);
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
